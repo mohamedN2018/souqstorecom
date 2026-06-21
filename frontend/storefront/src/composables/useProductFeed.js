@@ -12,9 +12,9 @@ export function useProductFeed(onEvent) {
   let retry;
 
   function connect() {
-    // WebSocket under the unique "/gw" prefix (the bare "/ws" is hijacked by
-    // another app on the shared edge). nginx/Vite strip "/gw" → "/ws".
-    ws = new WebSocket(`${proto}://${location.host}/gw/ws/products/`);
+    // WebSocket under the unique "/sqstore/rt" namespace (avoids the generic
+    // "/ws" hijacked by other apps). nginx/Vite map "/sqstore/rt" → "/ws".
+    ws = new WebSocket(`${proto}://${location.host}/sqstore/rt/products/`);
     ws.onmessage = (e) => {
       try {
         const data = rewriteMedia(JSON.parse(e.data));

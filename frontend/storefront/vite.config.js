@@ -18,12 +18,12 @@ export default defineConfig({
     // websocket must therefore connect back on 5280, otherwise live-reload
     // silently fails and you'd have to refresh manually.
     hmr: { clientPort: 5280 },
-    // Same-origin proxy → no CORS. Everything goes through ONE "/gw" prefix
-    // (matching production, where it dodges the shared edge that hijacks
-    // "/api", "/ws" and "/media"). We strip "/gw" before hitting the gateway.
+    // Same-origin proxy → no CORS. Unique "/sqstore/*" namespace (matches prod)
+    // mapped to the gateway's real paths.
     proxy: {
-      "/gw": { target: GATEWAY, ws: true, changeOrigin: true, rewrite: (p) => p.replace(/^\/gw/, "") },
-      "/media": { target: GATEWAY, changeOrigin: true },
+      "/sqstore/v1": { target: GATEWAY, changeOrigin: true, rewrite: (p) => p.replace(/^\/sqstore\/v1/, "/api/v1") },
+      "/sqstore/rt": { target: GATEWAY, ws: true, changeOrigin: true, rewrite: (p) => p.replace(/^\/sqstore\/rt/, "/ws") },
+      "/sqstore/im": { target: GATEWAY, changeOrigin: true, rewrite: (p) => p.replace(/^\/sqstore\/im/, "/media") },
     },
   },
 });

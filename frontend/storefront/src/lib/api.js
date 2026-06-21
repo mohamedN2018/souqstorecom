@@ -1,12 +1,14 @@
 import axios from "axios";
 
-// Same-origin: Vite (dev) / nginx (prod) proxy this prefix to the gateway.
-// NOTE: the whole backend lives under ONE unique prefix "/gw" (API, WebSocket
-// AND media) because the shared platform/edge hijacks the bare "/api", "/ws"
-// and "/media" paths for another app. The web nginx / Vite proxy strip "/gw"
-// before reaching the gateway. See rewriteMedia() below for image URLs.
+// Same-origin: Vite (dev) / nginx (prod) map UNIQUE, collision-proof prefixes
+// to the gateway. The shared platform hijacks the generic "/api", "/ws", "/media"
+// (and even "/gw") paths for OTHER apps, so we use a brand-unique namespace that
+// contains none of those words:
+//   API   → /sqstore/v1/...   (nginx → /api/v1/...)
+//   WS    → /sqstore/rt/...    (nginx → /ws/...)
+//   media → /sqstore/im/...    (nginx → /media/...)  see rewriteMedia()
 const api = axios.create({
-  baseURL: "/gw/api/v1",
+  baseURL: "/sqstore/v1",
   timeout: 15000,
 });
 
@@ -42,11 +44,11 @@ api.interceptors.request.use((config) => {
   return config;
 });
 
-// Backend stores image URLs as "/media/...". Since the edge hijacks "/media",
-// rewrite them to "/gw/media/..." everywhere in one place — no component edits.
+// Backend stores image URLs as "/media/...". Rewrite them to the unique
+// "/sqstore/im/..." namespace everywhere in one place — no component edits.
 export function rewriteMedia(value) {
   if (typeof value === "string") {
-    return value.startsWith("/media/") ? "/gw" + value : value;
+    return value.startsWith("/media/") ? "/sqstore/im" + value.slice(6) : value;
   }
   if (Array.isArray(value)) return value.map(rewriteMedia);
   if (value && typeof value === "object") {
