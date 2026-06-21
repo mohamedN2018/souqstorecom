@@ -43,7 +43,7 @@ services:
       DJANGO_DEBUG: "False"
       DJANGO_SECRET_KEY: ${DJANGO_SECRET_KEY}
       JWT_SIGNING_KEY: ${JWT_SIGNING_KEY}
-      DJANGO_ALLOWED_HOSTS: ${DOMAIN},gateway,localhost
+      DJANGO_ALLOWED_HOSTS: "*"
       CORS_ALLOWED_ORIGINS: https://${DOMAIN}
       TZ: ${TZ:-Africa/Cairo}
       DB_NAME: ${AUTH_DB_NAME}
@@ -83,7 +83,7 @@ services:
       DJANGO_DEBUG: "False"
       DJANGO_SECRET_KEY: ${DJANGO_SECRET_KEY}
       JWT_SIGNING_KEY: ${JWT_SIGNING_KEY}
-      DJANGO_ALLOWED_HOSTS: ${DOMAIN},gateway,localhost
+      DJANGO_ALLOWED_HOSTS: "*"
       TZ: ${TZ:-Africa/Cairo}
       DB_NAME: ${VENDOR_DB_NAME}
       DB_USER: ${VENDOR_DB_USER}
@@ -120,7 +120,7 @@ services:
       DJANGO_DEBUG: "False"
       DJANGO_SECRET_KEY: ${DJANGO_SECRET_KEY}
       JWT_SIGNING_KEY: ${JWT_SIGNING_KEY}
-      DJANGO_ALLOWED_HOSTS: ${DOMAIN},gateway,localhost
+      DJANGO_ALLOWED_HOSTS: "*"
       TZ: ${TZ:-Africa/Cairo}
       DB_NAME: ${CATALOG_DB_NAME}
       DB_USER: ${CATALOG_DB_USER}

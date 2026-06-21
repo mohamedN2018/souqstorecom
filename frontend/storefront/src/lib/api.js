@@ -1,11 +1,12 @@
 import axios from "axios";
 
 // Same-origin: Vite (dev) / nginx (prod) proxy this prefix to the gateway.
-// NOTE: we use the unique "/sqapi" prefix (not "/api") because another app on
-// the shared platform/edge hijacks "/api" for this domain. The web nginx and
-// Vite proxy rewrite "/sqapi" → "/api" before reaching the gateway.
+// NOTE: the whole backend lives under ONE unique prefix "/gw" (API, WebSocket
+// AND media) because the shared platform/edge hijacks the bare "/api", "/ws"
+// and "/media" paths for another app. The web nginx / Vite proxy strip "/gw"
+// before reaching the gateway. See rewriteMedia() below for image URLs.
 const api = axios.create({
-  baseURL: "/sqapi/v1",
+  baseURL: "/gw/api/v1",
   timeout: 15000,
 });
 
@@ -14,6 +15,24 @@ api.interceptors.request.use((config) => {
   const token = localStorage.getItem("access");
   if (token) config.headers.Authorization = `Bearer ${token}`;
   return config;
+});
+
+// Backend stores image URLs as "/media/...". Since the edge hijacks "/media",
+// rewrite them to "/gw/media/..." everywhere in one place — no component edits.
+export function rewriteMedia(value) {
+  if (typeof value === "string") {
+    return value.startsWith("/media/") ? "/gw" + value : value;
+  }
+  if (Array.isArray(value)) return value.map(rewriteMedia);
+  if (value && typeof value === "object") {
+    for (const k in value) value[k] = rewriteMedia(value[k]);
+    return value;
+  }
+  return value;
+}
+api.interceptors.response.use((res) => {
+  if (res.data) res.data = rewriteMedia(res.data);
+  return res;
 });
 
 export default api;

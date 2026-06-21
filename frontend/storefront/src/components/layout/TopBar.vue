@@ -22,17 +22,17 @@ function logout() {
 
 <template>
   <div class="text-white text-xs" style="background: var(--c-secondary)">
-    <div class="container-x flex items-center justify-between h-9">
-      <div class="flex items-center gap-4 opacity-90">
-        <span class="flex items-center gap-1.5">
-          <Icon name="truck" class="w-3.5 h-3.5" />
-          {{ site.announcement || "شحن مجاني للطلبات فوق 500 ج.م" }}
+    <div class="container-x flex items-center justify-between gap-3 h-9">
+      <div class="flex items-center gap-4 opacity-90 min-w-0">
+        <span class="flex items-center gap-1.5 truncate">
+          <Icon name="truck" class="w-3.5 h-3.5 shrink-0" />
+          <span class="truncate">{{ site.announcement || "شحن مجاني للطلبات فوق 500 ج.م" }}</span>
         </span>
-        <span class="hidden sm:flex items-center gap-1.5">
+        <span class="hidden md:flex items-center gap-1.5 shrink-0">
           <Icon name="phone" class="w-3.5 h-3.5" /> الدعم: 19999
         </span>
       </div>
-      <div class="flex items-center gap-3">
+      <div class="flex items-center gap-2.5 sm:gap-3 shrink-0">
         <button @click="toggleLang" class="flex items-center gap-1.5 hover:opacity-80">
           <Icon name="globe" class="w-3.5 h-3.5" />{{ locale === "ar" ? "English" : "العربية" }}
         </button>

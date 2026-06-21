@@ -1,5 +1,5 @@
 <script setup>
-import { computed } from "vue";
+import { computed, ref, onMounted, onUnmounted } from "vue";
 import { useRoute } from "vue-router";
 import TopBar from "@/components/layout/TopBar.vue";
 import SiteHeader from "@/components/layout/SiteHeader.vue";
@@ -15,6 +15,27 @@ const isDashboard = computed(() => route.meta.dashboard === true);
 
 // Scroll down → keep only the NavBar; scroll up → reveal the whole header.
 const { collapsed } = useHeaderScroll();
+
+// Measure the top rows (TopBar + SiteHeader) so we can slide them up by exactly
+// their height with a GPU-accelerated transform (smooth, no layout jank).
+const topRef = ref(null);
+const topH = ref(104);
+let ro;
+function measure() {
+  if (topRef.value) topH.value = topRef.value.offsetHeight;
+}
+onMounted(() => {
+  measure();
+  if (window.ResizeObserver && topRef.value) {
+    ro = new ResizeObserver(measure);
+    ro.observe(topRef.value);
+  }
+  window.addEventListener("resize", measure);
+});
+onUnmounted(() => {
+  ro?.disconnect();
+  window.removeEventListener("resize", measure);
+});
 </script>
 
 <template>
@@ -23,14 +44,11 @@ const { collapsed } = useHeaderScroll();
 
   <!-- Storefront -->
   <div v-else class="min-h-screen flex flex-col">
-    <header class="sticky top-0 z-40">
-      <!-- collapsible top rows: smoothly fold to 0 height on scroll-down -->
-      <div class="grid transition-[grid-template-rows] duration-300 ease-out"
-           :style="{ gridTemplateRows: collapsed ? '0fr' : '1fr' }">
-        <div class="overflow-hidden">
-          <TopBar />
-          <SiteHeader />
-        </div>
+    <header class="sticky top-0 z-40 transition-transform duration-300 ease-out will-change-transform"
+            :style="{ transform: collapsed ? `translateY(-${topH}px)` : 'translateY(0)' }">
+      <div ref="topRef">
+        <TopBar />
+        <SiteHeader />
       </div>
       <NavBar />
     </header>

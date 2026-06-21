@@ -1,4 +1,5 @@
 import { onBeforeUnmount } from "vue";
+import { rewriteMedia } from "@/lib/api";
 
 /**
  * Live product feed over WebSocket (proxied to the catalog service).
@@ -11,12 +12,12 @@ export function useProductFeed(onEvent) {
   let retry;
 
   function connect() {
-    // Unique "/sqws" prefix (not "/ws") — another app on the shared edge
-    // hijacks "/ws" for this domain. nginx/Vite rewrite "/sqws" → "/ws".
-    ws = new WebSocket(`${proto}://${location.host}/sqws/products/`);
+    // WebSocket under the unique "/gw" prefix (the bare "/ws" is hijacked by
+    // another app on the shared edge). nginx/Vite strip "/gw" → "/ws".
+    ws = new WebSocket(`${proto}://${location.host}/gw/ws/products/`);
     ws.onmessage = (e) => {
       try {
-        const data = JSON.parse(e.data);
+        const data = rewriteMedia(JSON.parse(e.data));
         if (data.event) onEvent(data);
       } catch {
         /* ignore */
