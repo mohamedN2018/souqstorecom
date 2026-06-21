@@ -1,20 +1,48 @@
 # ============================================================
 # SouqStore — Marketplace (Microservices) · development stack
 # Usage:  cp .env.example .env  &&  docker compose up --build
+#
+# Ports are deliberately uncommon to avoid clashing with other local stacks:
+#   Frontend (Vue) ....... http://localhost:5280
+#   API Gateway .......... http://localhost:18080
+#   RabbitMQ console ..... http://localhost:15673
+#   MinIO console ........ http://localhost:19001  (profile: full)
 # ============================================================
 
 services:
+  # ---------------------------------------------------------
+  # Frontend — Vue 3 + Vite + Tailwind + GSAP (storefront)
+  # ---------------------------------------------------------
+  frontend:
+    build: ./frontend/storefront
+    command: npm run dev -- --host 0.0.0.0 --port 5173
+    environment:
+      # Vite proxies /api and /media to the gateway (see vite.config.js)
+      GATEWAY_URL: http://gateway:80
+    volumes:
+      - ./frontend/storefront:/app
+      - frontend-node-modules:/app/node_modules
+    ports:
+      - "5280:5173"
+    depends_on:
+      - gateway
+    restart: unless-stopped
+    networks: [souq-net]
+
   # ---------------------------------------------------------
   # API Gateway — single entrypoint, routes to each service
   # ---------------------------------------------------------
   gateway:
     image: nginx:1.27-alpine
     ports:
-      - "8080:80"
+      - "18080:80"
     volumes:
-      - ./gateway/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./backend/gateway/nginx.conf:/etc/nginx/nginx.conf:ro
+      - media-data:/var/www/media:ro
     depends_on:
       - auth
+      - vendor
+      - catalog
     restart: unless-stopped
     networks: [souq-net]
 
@@ -22,7 +50,7 @@ services:
   # Auth / Identity service
   # ---------------------------------------------------------
   auth:
-    build: ./services/auth
+    build: ./backend/services/auth
     environment:
       DJANGO_DEBUG: ${DJANGO_DEBUG}
       DJANGO_SECRET_KEY: ${DJANGO_SECRET_KEY}
@@ -36,9 +64,7 @@ services:
       DB_HOST: auth-db
       DB_PORT: "5432"
     volumes:
-      # Dev convenience: live code reload + migrations written back to host.
-      # Remove this mount in production (code is baked into the image).
-      - ./services/auth:/app
+      - ./backend/services/auth:/app
     depends_on:
       auth-db:
         condition: service_healthy
@@ -62,7 +88,89 @@ services:
     networks: [souq-net]
 
   # ---------------------------------------------------------
-  # Shared infra (used by multiple services as they come online)
+  # Vendor / Store service
+  # ---------------------------------------------------------
+  vendor:
+    build: ./backend/services/vendor
+    environment:
+      DJANGO_DEBUG: ${DJANGO_DEBUG}
+      DJANGO_SECRET_KEY: ${DJANGO_SECRET_KEY}
+      JWT_SIGNING_KEY: ${JWT_SIGNING_KEY}
+      DJANGO_ALLOWED_HOSTS: ${DJANGO_ALLOWED_HOSTS}
+      TZ: ${TZ}
+      DB_NAME: ${VENDOR_DB_NAME}
+      DB_USER: ${VENDOR_DB_USER}
+      DB_PASSWORD: ${VENDOR_DB_PASSWORD}
+      DB_HOST: vendor-db
+      DB_PORT: "5432"
+    volumes:
+      - ./backend/services/vendor:/app
+    depends_on:
+      vendor-db:
+        condition: service_healthy
+    restart: unless-stopped
+    networks: [souq-net]
+
+  vendor-db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: ${VENDOR_DB_NAME}
+      POSTGRES_USER: ${VENDOR_DB_USER}
+      POSTGRES_PASSWORD: ${VENDOR_DB_PASSWORD}
+    volumes:
+      - vendor-db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${VENDOR_DB_USER} -d ${VENDOR_DB_NAME}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    restart: unless-stopped
+    networks: [souq-net]
+
+  # ---------------------------------------------------------
+  # Catalog service (writes generated images into media-data)
+  # ---------------------------------------------------------
+  catalog:
+    build: ./backend/services/catalog
+    environment:
+      DJANGO_DEBUG: ${DJANGO_DEBUG}
+      DJANGO_SECRET_KEY: ${DJANGO_SECRET_KEY}
+      JWT_SIGNING_KEY: ${JWT_SIGNING_KEY}
+      DJANGO_ALLOWED_HOSTS: ${DJANGO_ALLOWED_HOSTS}
+      TZ: ${TZ}
+      DB_NAME: ${CATALOG_DB_NAME}
+      DB_USER: ${CATALOG_DB_USER}
+      DB_PASSWORD: ${CATALOG_DB_PASSWORD}
+      DB_HOST: catalog-db
+      DB_PORT: "5432"
+      MEDIA_ROOT: /app/media
+    volumes:
+      - ./backend/services/catalog:/app
+      - media-data:/app/media
+    depends_on:
+      catalog-db:
+        condition: service_healthy
+    restart: unless-stopped
+    networks: [souq-net]
+
+  catalog-db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: ${CATALOG_DB_NAME}
+      POSTGRES_USER: ${CATALOG_DB_USER}
+      POSTGRES_PASSWORD: ${CATALOG_DB_PASSWORD}
+    volumes:
+      - catalog-db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${CATALOG_DB_USER} -d ${CATALOG_DB_NAME}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    restart: unless-stopped
+    networks: [souq-net]
+
+  # ---------------------------------------------------------
+  # Shared infra
   # ---------------------------------------------------------
   redis:
     image: redis:7-alpine
@@ -83,7 +191,7 @@ services:
       RABBITMQ_DEFAULT_USER: ${RABBITMQ_DEFAULT_USER}
       RABBITMQ_DEFAULT_PASS: ${RABBITMQ_DEFAULT_PASS}
     ports:
-      - "15672:15672"   # management UI (dev only)
+      - "15673:15672"
     volumes:
       - rabbitmq-data:/var/lib/rabbitmq
     healthcheck:
@@ -94,7 +202,7 @@ services:
     restart: unless-stopped
     networks: [souq-net]
 
-  # ---- Optional infra (enabled with: docker compose --profile full up) ----
+  # ---- Optional infra (docker compose --profile full up) ----
   meilisearch:
     image: getmeili/meilisearch:v1.11
     profiles: ["full"]
@@ -113,7 +221,7 @@ services:
       MINIO_ROOT_USER: ${MINIO_ROOT_USER}
       MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD}
     ports:
-      - "9001:9001"   # console (dev only)
+      - "19001:9001"
     volumes:
       - minio-data:/data
     restart: unless-stopped
@@ -121,10 +229,14 @@ services:
 
 volumes:
   auth-db-data:
+  vendor-db-data:
+  catalog-db-data:
+  media-data:
   redis-data:
   rabbitmq-data:
   meili-data:
   minio-data:
+  frontend-node-modules:
 
 networks:
   souq-net:

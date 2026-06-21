@@ -1,0 +1,70 @@
+@import "@fontsource/cairo/400.css";
+@import "@fontsource/cairo/600.css";
+@import "@fontsource/cairo/700.css";
+@import "@fontsource/cairo/800.css";
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ----------------------------------------------------------------
+   Theme variables — the "full custom color" system.
+   The theme Pinia store overwrites these at runtime; every Tailwind
+   `primary/secondary/accent/...` utility reads from here.
+----------------------------------------------------------------- */
+:root {
+  --c-primary: #2563eb;
+  --c-secondary: #1e293b;
+  --c-accent: #f59e0b;
+  --c-surface: #ffffff;
+  --c-ink: #0f172a;
+  --c-muted: #64748b;
+  --c-radius: 14px;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  font-family: "Cairo", system-ui, sans-serif;
+  background: var(--c-surface);
+  color: var(--c-ink);
+}
+
+/* Thin, themed scrollbar */
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+::-webkit-scrollbar-thumb {
+  background: var(--c-primary);
+  border-radius: 999px;
+  opacity: 0.6;
+}
+
+.container-x {
+  width: 100%;
+  max-width: 1280px;
+  margin-inline: auto;
+  padding-inline: 1rem;
+}
+
+/* Reusable themed primitives */
+.btn-primary {
+  background: var(--c-primary);
+  color: #fff;
+  border-radius: var(--c-radius);
+  padding: 0.6rem 1.2rem;
+  font-weight: 700;
+  transition: transform 0.15s ease, filter 0.15s ease;
+}
+.btn-primary:hover {
+  filter: brightness(1.08);
+  transform: translateY(-2px);
+}
+.card {
+  background: var(--c-surface);
+  border: 1px solid rgb(0 0 0 / 0.06);
+  border-radius: var(--c-radius);
+}
