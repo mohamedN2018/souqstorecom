@@ -1,6 +1,7 @@
 <script setup>
 import { ref, onMounted, onBeforeUnmount } from "vue";
 import { gsap } from "gsap";
+import Icon from "@/components/Icon.vue";
 
 // Offline promo slides (gradients + text, no external images).
 const slides = [
@@ -25,24 +26,33 @@ onBeforeUnmount(() => clearInterval(timer));
 </script>
 
 <template>
-  <div class="relative overflow-hidden rounded-theme card">
-    <div class="h-56 md:h-80 flex items-center text-white relative"
+  <div class="relative overflow-hidden rounded-theme shadow-lg">
+    <div class="h-60 md:h-[22rem] flex items-center text-white relative"
          :style="{ background: `linear-gradient(120deg, ${slides[idx].g[0]}, ${slides[idx].g[1]})` }">
-      <div class="promo-content container-x">
-        <h2 class="text-2xl md:text-4xl font-extrabold max-w-lg">{{ slides[idx].title }}</h2>
+      <div class="promo-content container-x relative z-10">
+        <span class="pill bg-white/20 backdrop-blur mb-4">عرض حصري</span>
+        <h2 class="text-3xl md:text-5xl font-extrabold max-w-lg leading-tight">{{ slides[idx].title }}</h2>
         <p class="mt-3 text-base md:text-lg opacity-90 max-w-md">{{ slides[idx].sub }}</p>
         <router-link :to="{ name: 'products' }"
-                     class="inline-block mt-5 bg-white font-bold px-6 py-2.5 rounded-theme hover:-translate-y-1 transition"
+                     class="inline-flex items-center gap-2 mt-6 bg-white font-bold px-7 py-3 rounded-2xl shadow-lg hover:-translate-y-1 transition"
                      :style="{ color: slides[idx].g[0] }">
-          {{ slides[idx].cta }} ←
+          {{ slides[idx].cta }} <Icon name="arrow-left" class="w-5 h-5" />
         </router-link>
       </div>
-      <div class="absolute -bottom-16 -left-16 w-64 h-64 rounded-full bg-white/10"></div>
+      <!-- decorative blobs -->
+      <div class="absolute -bottom-20 -left-16 w-72 h-72 rounded-full bg-white/10"></div>
+      <div class="absolute -top-16 -right-10 w-52 h-52 rounded-full bg-white/10"></div>
     </div>
 
     <!-- arrows -->
-    <button @click="go(idx - 1)" class="absolute top-1/2 -translate-y-1/2 right-3 w-10 h-10 rounded-full bg-black/25 text-white">›</button>
-    <button @click="go(idx + 1)" class="absolute top-1/2 -translate-y-1/2 left-3 w-10 h-10 rounded-full bg-black/25 text-white">‹</button>
+    <button @click="go(idx - 1)" aria-label="السابق"
+            class="absolute top-1/2 -translate-y-1/2 right-3 grid place-items-center w-11 h-11 rounded-full bg-white/20 hover:bg-white/35 backdrop-blur text-white transition">
+      <Icon name="chevron-right" />
+    </button>
+    <button @click="go(idx + 1)" aria-label="التالي"
+            class="absolute top-1/2 -translate-y-1/2 left-3 grid place-items-center w-11 h-11 rounded-full bg-white/20 hover:bg-white/35 backdrop-blur text-white transition">
+      <Icon name="chevron-left" />
+    </button>
 
     <!-- dots -->
     <div class="absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-2">

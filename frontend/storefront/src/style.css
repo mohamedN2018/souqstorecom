@@ -1,4 +1,5 @@
 @import "@fontsource/cairo/400.css";
+@import "@fontsource/cairo/500.css";
 @import "@fontsource/cairo/600.css";
 @import "@fontsource/cairo/700.css";
 @import "@fontsource/cairo/800.css";
@@ -13,13 +14,23 @@
    `primary/secondary/accent/...` utility reads from here.
 ----------------------------------------------------------------- */
 :root {
-  --c-primary: #2563eb;
-  --c-secondary: #1e293b;
-  --c-accent: #f59e0b;
+  --c-primary: #4f46e5;   /* indigo — modern, high-contrast */
+  --c-secondary: #0f172a; /* slate ink for the top bar */
+  --c-accent: #f43f5e;    /* rose — energetic deal/CTA accent */
   --c-surface: #ffffff;
   --c-ink: #0f172a;
   --c-muted: #64748b;
-  --c-radius: 14px;
+  --c-radius: 16px;
+
+  /* Soft, layered shadows (modern "floating card" depth) */
+  --shadow-sm: 0 1px 2px rgb(15 23 42 / 0.04), 0 1px 3px rgb(15 23 42 / 0.06);
+  --shadow-md: 0 4px 12px rgb(15 23 42 / 0.06), 0 2px 4px rgb(15 23 42 / 0.04);
+  --shadow-lg: 0 18px 40px -12px rgb(15 23 42 / 0.18), 0 8px 16px -8px rgb(15 23 42 / 0.1);
+}
+
+* {
+  scrollbar-width: thin;
+  scrollbar-color: color-mix(in srgb, var(--c-primary) 45%, transparent) transparent;
 }
 
 html {
@@ -28,69 +39,146 @@ html {
 
 body {
   font-family: "Cairo", system-ui, sans-serif;
-  /* Light page behind white cards → modern depth */
-  background: #f4f6f9;
+  /* subtle gradient canvas behind floating white cards */
+  background:
+    radial-gradient(1200px 600px at 100% -10%, color-mix(in srgb, var(--c-primary) 7%, transparent), transparent 60%),
+    radial-gradient(900px 500px at 0% 0%, color-mix(in srgb, var(--c-accent) 6%, transparent), transparent 55%),
+    #f6f7fb;
+  background-attachment: fixed;
   color: var(--c-ink);
   -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
 }
 
-/* Thin, themed scrollbar */
-::-webkit-scrollbar {
-  width: 10px;
-  height: 10px;
-}
+::-webkit-scrollbar { width: 10px; height: 10px; }
+::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb {
-  background: var(--c-primary);
+  background: color-mix(in srgb, var(--c-primary) 45%, transparent);
   border-radius: 999px;
-  opacity: 0.6;
+  border: 2px solid transparent;
+  background-clip: padding-box;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: color-mix(in srgb, var(--c-primary) 70%, transparent);
+  background-clip: padding-box;
 }
 
 .container-x {
   width: 100%;
-  max-width: 1280px;
+  max-width: 1320px;
   margin-inline: auto;
   padding-inline: 1rem;
+}
+@media (min-width: 768px) {
+  .container-x { padding-inline: 1.5rem; }
 }
 
 .no-scrollbar::-webkit-scrollbar { display: none; }
 .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
 
-/* Reusable themed primitives */
+/* ----------------------------------------------------------------
+   Reusable themed primitives
+----------------------------------------------------------------- */
 .btn-primary {
-  background: var(--c-primary);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  background: linear-gradient(135deg, var(--c-primary), color-mix(in srgb, var(--c-primary) 70%, #000));
   color: #fff;
-  border-radius: var(--c-radius);
-  padding: 0.6rem 1.2rem;
+  border-radius: calc(var(--c-radius) * 0.7);
+  padding: 0.65rem 1.25rem;
   font-weight: 700;
-  transition: transform 0.15s ease, filter 0.15s ease;
+  box-shadow: 0 8px 20px -8px color-mix(in srgb, var(--c-primary) 70%, transparent);
+  transition: transform 0.15s ease, box-shadow 0.2s ease, filter 0.15s ease;
 }
 .btn-primary:hover {
-  filter: brightness(1.08);
+  filter: brightness(1.05);
   transform: translateY(-2px);
+  box-shadow: 0 14px 28px -10px color-mix(in srgb, var(--c-primary) 75%, transparent);
 }
+.btn-primary:active { transform: translateY(0) scale(0.98); }
+
+.btn-ghost {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  background: color-mix(in srgb, var(--c-ink) 5%, transparent);
+  color: var(--c-ink);
+  border-radius: calc(var(--c-radius) * 0.7);
+  padding: 0.6rem 1.1rem;
+  font-weight: 700;
+  transition: background 0.15s ease, transform 0.15s ease;
+}
+.btn-ghost:hover { background: color-mix(in srgb, var(--c-primary) 12%, transparent); color: var(--c-primary); }
+
 .card {
   background: var(--c-surface);
   border: 1px solid rgb(15 23 42 / 0.06);
   border-radius: var(--c-radius);
-  box-shadow: 0 1px 2px rgb(15 23 42 / 0.04), 0 4px 12px rgb(15 23 42 / 0.04);
-  transition: box-shadow 0.2s ease, transform 0.2s ease, border-color 0.2s ease;
+  box-shadow: var(--shadow-sm);
+  transition: box-shadow 0.25s ease, transform 0.25s ease, border-color 0.25s ease;
 }
 .card:hover {
-  box-shadow: 0 4px 8px rgb(15 23 42 / 0.06), 0 12px 28px rgb(15 23 42 / 0.1);
+  box-shadow: var(--shadow-lg);
+  border-color: color-mix(in srgb, var(--c-primary) 25%, transparent);
 }
 
-/* Section headings get a small accent underline for a modern rhythm */
+/* Frosted glass surface (header / sticky chrome) */
+.glass {
+  background: color-mix(in srgb, var(--c-surface) 82%, transparent);
+  -webkit-backdrop-filter: saturate(1.4) blur(12px);
+  backdrop-filter: saturate(1.4) blur(12px);
+}
+
+/* Pill used for chips, badges, nav links */
+.pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.3rem 0.75rem;
+  border-radius: 999px;
+  font-size: 0.8rem;
+  font-weight: 700;
+}
+
+/* Section heading rhythm */
 .section-title {
   position: relative;
-  padding-bottom: 0.5rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-weight: 800;
 }
-.section-title::after {
+
+/* gradient text accent */
+.text-gradient {
+  background: linear-gradient(120deg, var(--c-primary), var(--c-accent));
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+/* Shimmer skeleton for loading states */
+.skeleton {
+  position: relative;
+  overflow: hidden;
+  background: color-mix(in srgb, var(--c-ink) 7%, transparent);
+}
+.skeleton::after {
   content: "";
   position: absolute;
-  bottom: 0;
-  inset-inline-start: 0;
-  width: 48px;
-  height: 3px;
-  border-radius: 999px;
-  background: var(--c-accent);
+  inset: 0;
+  transform: translateX(-100%);
+  background: linear-gradient(90deg, transparent, color-mix(in srgb, #fff 55%, transparent), transparent);
+  animation: shimmer 1.4s infinite;
+}
+@keyframes shimmer { 100% { transform: translateX(100%); } }
+
+/* Focus ring for accessibility */
+:where(button, a, input, [tabindex]):focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--c-primary) 70%, transparent);
+  outline-offset: 2px;
+  border-radius: 6px;
 }

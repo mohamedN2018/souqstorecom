@@ -3,6 +3,7 @@ import { onMounted, ref } from "vue";
 import { useRouter } from "vue-router";
 import { useUiStore } from "@/stores/ui";
 import { useCatalogStore } from "@/stores/catalog";
+import Icon from "@/components/Icon.vue";
 
 const ui = useUiStore();
 const catalog = useCatalogStore();
@@ -27,17 +28,22 @@ function go(slug) {
       <aside v-if="ui.drawer"
              class="fixed top-0 bottom-0 right-0 z-[61] w-[85vw] max-w-sm bg-surface shadow-2xl flex flex-col">
         <div class="h-16 flex items-center gap-3 px-5 text-white shrink-0" style="background: var(--c-primary)">
-          <span class="text-2xl">👤</span>
+          <Icon name="grid" class="w-6 h-6" />
           <span class="font-extrabold text-lg">كل الأقسام</span>
-          <button @click="ui.closeDrawer()" class="mr-auto text-2xl leading-none">✕</button>
+          <button @click="ui.closeDrawer()" class="mr-auto grid place-items-center w-9 h-9 rounded-lg hover:bg-white/15 transition" aria-label="إغلاق">
+            <Icon name="x" />
+          </button>
         </div>
 
         <nav class="flex-1 overflow-y-auto py-2">
           <div v-for="c in catalog.topCategories" :key="c.id" class="border-b border-black/5">
             <button @click="expanded === c.id ? (expanded = null) : (expanded = c.id)"
                     class="w-full flex items-center justify-between px-5 py-3.5 font-bold hover:bg-primary/5 transition">
-              <span class="flex items-center gap-3"><span class="text-xl">🛍️</span>{{ c.name }}</span>
-              <span class="text-ink/40 transition-transform" :class="expanded === c.id ? 'rotate-90' : ''">‹</span>
+              <span class="flex items-center gap-3">
+                <span class="grid place-items-center w-8 h-8 rounded-lg bg-primary/8 text-primary"><Icon name="tag" class="w-4 h-4" /></span>
+                {{ c.name }}
+              </span>
+              <Icon name="chevron-down" class="w-4 h-4 text-ink/40 transition-transform" :class="expanded === c.id ? 'rotate-180' : ''" />
             </button>
             <transition name="expand">
               <div v-if="expanded === c.id" class="bg-black/[0.02]">
@@ -55,7 +61,9 @@ function go(slug) {
 
         <div class="p-4 border-t border-black/5 shrink-0">
           <router-link :to="{ name: 'vendors' }" @click="ui.closeDrawer()"
-                       class="block text-center font-bold text-primary">🏪 تصفّح كل المتاجر</router-link>
+                       class="flex items-center justify-center gap-2 font-bold text-primary py-2 rounded-xl hover:bg-primary/8 transition">
+            <Icon name="store" class="w-5 h-5" /> تصفّح كل المتاجر
+          </router-link>
         </div>
       </aside>
     </transition>

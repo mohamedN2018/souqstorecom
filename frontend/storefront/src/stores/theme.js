@@ -1,13 +1,13 @@
 import { defineStore } from "pinia";
 
 const DEFAULT = {
-  primary: "#2563eb",
-  secondary: "#1e293b",
-  accent: "#f59e0b",
+  primary: "#4f46e5",
+  secondary: "#0f172a",
+  accent: "#f43f5e",
   surface: "#ffffff",
   ink: "#0f172a",
   muted: "#64748b",
-  radius: 14,
+  radius: 16,
 };
 
 const VARMAP = {

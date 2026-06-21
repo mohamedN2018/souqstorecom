@@ -7,10 +7,14 @@ import NavBar from "@/components/layout/NavBar.vue";
 import AppFooter from "@/components/AppFooter.vue";
 import DepartmentsDrawer from "@/components/layout/DepartmentsDrawer.vue";
 import LiveProductToast from "@/components/LiveProductToast.vue";
+import { useHeaderScroll } from "@/composables/useHeaderScroll";
 
 const route = useRoute();
 // Dashboards are fully isolated — no storefront chrome.
 const isDashboard = computed(() => route.meta.dashboard === true);
+
+// Scroll down → keep only the NavBar; scroll up → reveal the whole header.
+const { collapsed } = useHeaderScroll();
 </script>
 
 <template>
@@ -19,11 +23,18 @@ const isDashboard = computed(() => route.meta.dashboard === true);
 
   <!-- Storefront -->
   <div v-else class="min-h-screen flex flex-col">
-    <header class="sticky top-0 z-40 shadow-sm">
-      <TopBar />
-      <SiteHeader />
+    <header class="sticky top-0 z-40">
+      <!-- collapsible top rows: smoothly fold to 0 height on scroll-down -->
+      <div class="grid transition-[grid-template-rows] duration-300 ease-out"
+           :style="{ gridTemplateRows: collapsed ? '0fr' : '1fr' }">
+        <div class="overflow-hidden">
+          <TopBar />
+          <SiteHeader />
+        </div>
+      </div>
       <NavBar />
     </header>
+
     <main class="flex-1">
       <router-view v-slot="{ Component }">
         <transition name="fade" mode="out-in">
