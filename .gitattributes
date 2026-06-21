@@ -1,0 +1,4 @@
+# Shell scripts must stay LF — they run inside Linux containers. A CRLF
+# checkout (common on Windows) would make `sh`/`bash` fail with \r errors.
+*.sh text eol=lf
+entrypoint.sh text eol=lf

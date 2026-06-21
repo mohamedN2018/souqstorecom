@@ -66,11 +66,16 @@ services:
 
   auth-db:
     image: postgres:16-alpine
+    # Self-healing password: always re-sync the role password with the env on
+    # boot, so a stale volume can never cause "password authentication failed".
+    entrypoint: ["sh", "/usr/local/bin/ensure-password.sh"]
     environment:
       POSTGRES_DB: ${AUTH_DB_NAME}
       POSTGRES_USER: ${AUTH_DB_USER}
       POSTGRES_PASSWORD: ${AUTH_DB_PASSWORD}
-    volumes: [auth-db-data:/var/lib/postgresql/data]
+    volumes:
+      - auth-db-data:/var/lib/postgresql/data
+      - ./backend/db/ensure-password.sh:/usr/local/bin/ensure-password.sh:ro
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${AUTH_DB_USER} -d ${AUTH_DB_NAME}"]
       interval: 5s
@@ -100,11 +105,14 @@ services:
 
   vendor-db:
     image: postgres:16-alpine
+    entrypoint: ["sh", "/usr/local/bin/ensure-password.sh"]
     environment:
       POSTGRES_DB: ${VENDOR_DB_NAME}
       POSTGRES_USER: ${VENDOR_DB_USER}
       POSTGRES_PASSWORD: ${VENDOR_DB_PASSWORD}
-    volumes: [vendor-db-data:/var/lib/postgresql/data]
+    volumes:
+      - vendor-db-data:/var/lib/postgresql/data
+      - ./backend/db/ensure-password.sh:/usr/local/bin/ensure-password.sh:ro
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${VENDOR_DB_USER} -d ${VENDOR_DB_NAME}"]
       interval: 5s
@@ -139,11 +147,14 @@ services:
 
   catalog-db:
     image: postgres:16-alpine
+    entrypoint: ["sh", "/usr/local/bin/ensure-password.sh"]
     environment:
       POSTGRES_DB: ${CATALOG_DB_NAME}
       POSTGRES_USER: ${CATALOG_DB_USER}
       POSTGRES_PASSWORD: ${CATALOG_DB_PASSWORD}
-    volumes: [catalog-db-data:/var/lib/postgresql/data]
+    volumes:
+      - catalog-db-data:/var/lib/postgresql/data
+      - ./backend/db/ensure-password.sh:/usr/local/bin/ensure-password.sh:ro
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${CATALOG_DB_USER} -d ${CATALOG_DB_NAME}"]
       interval: 5s
