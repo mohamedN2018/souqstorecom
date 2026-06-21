@@ -28,8 +28,10 @@ html {
 
 body {
   font-family: "Cairo", system-ui, sans-serif;
-  background: var(--c-surface);
+  /* Light page behind white cards → modern depth */
+  background: #f4f6f9;
   color: var(--c-ink);
+  -webkit-font-smoothing: antialiased;
 }
 
 /* Thin, themed scrollbar */
@@ -50,6 +52,9 @@ body {
   padding-inline: 1rem;
 }
 
+.no-scrollbar::-webkit-scrollbar { display: none; }
+.no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
 /* Reusable themed primitives */
 .btn-primary {
   background: var(--c-primary);
@@ -65,6 +70,27 @@ body {
 }
 .card {
   background: var(--c-surface);
-  border: 1px solid rgb(0 0 0 / 0.06);
+  border: 1px solid rgb(15 23 42 / 0.06);
   border-radius: var(--c-radius);
+  box-shadow: 0 1px 2px rgb(15 23 42 / 0.04), 0 4px 12px rgb(15 23 42 / 0.04);
+  transition: box-shadow 0.2s ease, transform 0.2s ease, border-color 0.2s ease;
+}
+.card:hover {
+  box-shadow: 0 4px 8px rgb(15 23 42 / 0.06), 0 12px 28px rgb(15 23 42 / 0.1);
+}
+
+/* Section headings get a small accent underline for a modern rhythm */
+.section-title {
+  position: relative;
+  padding-bottom: 0.5rem;
+}
+.section-title::after {
+  content: "";
+  position: absolute;
+  bottom: 0;
+  inset-inline-start: 0;
+  width: 48px;
+  height: 3px;
+  border-radius: 999px;
+  background: var(--c-accent);
 }

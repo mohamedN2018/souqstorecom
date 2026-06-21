@@ -227,8 +227,9 @@ useProductFeed((ev) => {
         </div>
       </div>
 
-      <!-- ADD / EDIT FORM -->
-      <div v-else-if="tab === 'form'" class="max-w-2xl">
+      <!-- ADD / EDIT FORM + LIVE SIDE PANEL -->
+      <div v-else-if="tab === 'form'" class="grid lg:grid-cols-[1fr_320px] gap-5 items-start">
+        <div>
         <h2 class="text-lg font-extrabold mb-4">{{ editing ? "تعديل منتج" : "إضافة منتج جديد" }}</h2>
         <form @submit.prevent="saveProduct" class="bg-white rounded-2xl p-5 border border-black/5 grid sm:grid-cols-2 gap-4">
           <div class="sm:col-span-2"><label class="text-sm font-semibold">اسم المنتج</label>
@@ -249,6 +250,31 @@ useProductFeed((ev) => {
           <label class="sm:col-span-2 flex items-center gap-2 text-sm"><input v-model="form.is_featured" type="checkbox" /> منتج مميز</label>
           <button :disabled="saving" class="btn-primary sm:col-span-2">{{ saving ? "..." : (editing ? "حفظ التعديلات" : "إضافة المنتج") }}</button>
         </form>
+        </div>
+
+        <!-- LIVE side panel: products you added appear here instantly -->
+        <aside class="bg-white rounded-2xl border border-black/5 lg:sticky lg:top-5 overflow-hidden">
+          <div class="px-4 py-3 border-b border-black/5 flex items-center justify-between">
+            <span class="font-extrabold text-sm">منتجاتك ({{ products.length }})</span>
+            <span class="text-[11px] text-green-600 flex items-center gap-1">
+              <span class="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span> مباشر
+            </span>
+          </div>
+          <div class="max-h-[70vh] overflow-y-auto p-2">
+            <div v-if="!products.length" class="text-center text-ink/40 text-sm py-8">أضف أول منتج ليظهر هنا فوراً.</div>
+            <transition-group name="slidein" tag="div" class="space-y-2">
+              <div v-for="p in products.slice(0, 30)" :key="p.id"
+                   class="flex items-center gap-2 p-2 rounded-xl hover:bg-black/[0.03]">
+                <img :src="p.primary_image" class="w-11 h-11 rounded-lg object-cover bg-black/5 shrink-0" />
+                <div class="min-w-0 flex-1">
+                  <div class="text-xs font-semibold line-clamp-1">{{ p.name }}</div>
+                  <div class="text-primary font-bold text-xs">{{ Number(p.price).toLocaleString() }} ج.م</div>
+                </div>
+                <button @click="editProduct(p)" class="text-xs text-ink/40 hover:text-primary">✏️</button>
+              </div>
+            </transition-group>
+          </div>
+        </aside>
       </div>
 
       <!-- PROFILE -->
@@ -318,3 +344,10 @@ useProductFeed((ev) => {
     </template>
   </DashboardShell>
 </template>
+
+<style scoped>
+/* New product slides in at the top of the live side panel */
+.slidein-enter-active { transition: all 0.45s cubic-bezier(0.4, 0, 0.2, 1); }
+.slidein-enter-from { opacity: 0; transform: translateY(-12px); background: rgb(34 197 94 / 0.12); }
+.slidein-move { transition: transform 0.35s ease; }
+</style>

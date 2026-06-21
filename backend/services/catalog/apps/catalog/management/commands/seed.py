@@ -43,8 +43,8 @@ class Command(BaseCommand):
     help = "Seed categories, products, variants, images and reviews"
 
     def add_arguments(self, parser):
-        parser.add_argument("--products", type=int, default=1000)
-        parser.add_argument("--vendors", type=int, default=24)
+        parser.add_argument("--products", type=int, default=4000)
+        parser.add_argument("--vendors", type=int, default=60)
 
     @transaction.atomic
     def handle(self, *args, **opts):

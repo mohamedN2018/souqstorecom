@@ -2,7 +2,7 @@
 import { ref, onMounted } from "vue";
 import { gsap } from "gsap";
 import { useI18n } from "vue-i18n";
-import { catalogApi } from "@/lib/api";
+import { catalogApi, vendorApi } from "@/lib/api";
 import { useCatalogStore } from "@/stores/catalog";
 import { useProductFeed } from "@/composables/useProductFeed";
 import ProductCard from "@/components/ProductCard.vue";
@@ -16,6 +16,7 @@ const catalog = useCatalogStore();
 const featured = ref([]);
 const bestSellers = ref([]);
 const deals = ref([]);
+const vendors = ref([]);
 const liveArrivals = ref([]);
 const loading = ref(true);
 
@@ -35,18 +36,19 @@ function startCountdown() {
 onMounted(async () => {
   startCountdown();
   catalog.loadCategories();
-  try {
-    const [feat, best, deal] = await Promise.all([
-      catalogApi.products({ featured: true, ordering: "-rating_avg" }),
-      catalogApi.products({ ordering: "-sold_count" }),
-      catalogApi.products({ ordering: "-created_at" }),
-    ]);
-    featured.value = feat.data.results.slice(0, 12);
-    bestSellers.value = best.data.results.slice(0, 12);
-    deals.value = deal.data.results.filter((p) => p.discount_percent > 0).slice(0, 12);
-  } finally {
-    loading.value = false;
-  }
+  // Resilient: each section loads independently — one failing request never
+  // blanks the whole page.
+  const [feat, best, deal, vens] = await Promise.allSettled([
+    catalogApi.products({ featured: true, ordering: "-rating_avg" }),
+    catalogApi.products({ ordering: "-sold_count" }),
+    catalogApi.products({ ordering: "-created_at" }),
+    vendorApi.list({ ordering: "-rating_avg" }),
+  ]);
+  if (feat.status === "fulfilled") featured.value = feat.value.data.results.slice(0, 12);
+  if (best.status === "fulfilled") bestSellers.value = best.value.data.results.slice(0, 12);
+  if (deal.status === "fulfilled") deals.value = deal.value.data.results.filter((p) => p.discount_percent > 0).slice(0, 12);
+  if (vens.status === "fulfilled") vendors.value = vens.value.data.results.slice(0, 12);
+  loading.value = false;
   gsap.from(".reveal", { y: 24, opacity: 0, duration: 0.6, stagger: 0.08, ease: "power2.out" });
 });
 
@@ -111,6 +113,24 @@ useProductFeed((data) => {
       <div v-if="loading" class="text-center py-10 text-ink/40">{{ t("common.loading") }}</div>
       <div v-else class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
         <ProductCard v-for="p in bestSellers" :key="p.id" :product="p" />
+      </div>
+    </section>
+
+    <!-- STORES -->
+    <section class="reveal">
+      <div class="flex items-center justify-between mb-4">
+        <h2 class="text-xl md:text-2xl font-extrabold">🏪 تسوّق من متاجرنا</h2>
+        <router-link :to="{ name: 'vendors' }" class="text-sm text-primary font-bold">كل المتاجر</router-link>
+      </div>
+      <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+        <router-link v-for="v in vendors" :key="v.id"
+                     :to="{ name: 'vendor', params: { slug: v.slug } }"
+                     class="card p-4 flex flex-col items-center gap-2 text-center hover:border-primary hover:-translate-y-1 transition">
+          <img :src="v.logo_url" class="w-16 h-16 rounded-full object-cover bg-black/5" />
+          <div class="font-bold text-sm line-clamp-1">{{ v.name }}</div>
+          <div class="text-xs text-amber-500">★ {{ v.rating_avg }}</div>
+          <div class="text-[11px] text-ink/40">{{ v.products_count }} منتج</div>
+        </router-link>
       </div>
     </section>
 

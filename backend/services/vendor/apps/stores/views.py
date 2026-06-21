@@ -15,9 +15,10 @@ class HealthView(APIView):
 
 
 class VendorListView(generics.ListAPIView):
-    """GET /api/v1/vendors/ — browse stores (search + ordering)."""
+    """GET /api/v1/vendors/ — browse ACTIVE stores (search + ordering)."""
 
-    queryset = Vendor.objects.all()
+    # Only approved/active stores are public; pending applicants stay hidden.
+    queryset = Vendor.objects.filter(status="active")
     serializer_class = VendorListSerializer
     filter_backends = [filters.SearchFilter, filters.OrderingFilter]
     search_fields = ["name", "tagline", "city"]

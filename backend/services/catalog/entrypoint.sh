@@ -13,5 +13,6 @@ python manage.py collectstatic --noinput || true
 if [ "$DJANGO_DEBUG" = "True" ]; then
   exec python manage.py runserver 0.0.0.0:8000
 else
-  exec gunicorn config.wsgi:application --bind 0.0.0.0:8000 --workers 3
+  # Catalog uses Channels (WebSockets) → must run an ASGI server (daphne), not WSGI.
+  exec daphne -b 0.0.0.0 -p 8000 config.asgi:application
 fi

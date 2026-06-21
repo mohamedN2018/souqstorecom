@@ -66,7 +66,7 @@ class Command(BaseCommand):
     help = "Seed vendors and store themes"
 
     def add_arguments(self, parser):
-        parser.add_argument("--vendors", type=int, default=24)
+        parser.add_argument("--vendors", type=int, default=60)
 
     @transaction.atomic
     def handle(self, *args, **opts):
@@ -98,12 +98,12 @@ class Command(BaseCommand):
                 phone=f"+201{random.randint(0,2)}{random.randint(10**7, 10**8 - 1)}",
                 country="مصر",
                 city=random.choice(CITIES),
-                is_featured=(i < 6),
+                is_featured=(i < 8),
                 status="active",
                 terms_accepted=True,
                 rating_avg=round(random.uniform(3.6, 5.0), 2),
                 rating_count=random.randint(12, 4200),
-                products_count=0,  # updated by catalog seeder reporting, kept simple here
+                products_count=random.randint(18, 220),  # believable demo count
             )
             StoreTheme.objects.create(
                 vendor=vendor,

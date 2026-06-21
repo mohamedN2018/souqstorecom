@@ -37,7 +37,7 @@ class Command(BaseCommand):
 
     def add_arguments(self, parser):
         parser.add_argument("--customers", type=int, default=200)
-        parser.add_argument("--vendors", type=int, default=24)
+        parser.add_argument("--vendors", type=int, default=60)
 
     @transaction.atomic
     def handle(self, *args, **opts):

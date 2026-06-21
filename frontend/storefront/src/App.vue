@@ -5,6 +5,8 @@ import TopBar from "@/components/layout/TopBar.vue";
 import SiteHeader from "@/components/layout/SiteHeader.vue";
 import NavBar from "@/components/layout/NavBar.vue";
 import AppFooter from "@/components/AppFooter.vue";
+import DepartmentsDrawer from "@/components/layout/DepartmentsDrawer.vue";
+import LiveProductToast from "@/components/LiveProductToast.vue";
 
 const route = useRoute();
 // Dashboards are fully isolated — no storefront chrome.
@@ -30,6 +32,10 @@ const isDashboard = computed(() => route.meta.dashboard === true);
       </router-view>
     </main>
     <AppFooter />
+
+    <!-- Amazon-style departments drawer + live new-product toasts -->
+    <DepartmentsDrawer />
+    <LiveProductToast />
   </div>
 </template>
 
