@@ -10,10 +10,17 @@ const api = axios.create({
   timeout: 15000,
 });
 
-// Attach JWT if present
+// Attach JWT if present + bust stale shared-edge caches.
 api.interceptors.request.use((config) => {
   const token = localStorage.getItem("access");
   if (token) config.headers.Authorization = `Bearer ${token}`;
+  // A stale CDN/edge cache (from when another app briefly answered our paths)
+  // can keep serving empty/foreign responses for API GETs near some regions.
+  // A unique query param makes every GET a fresh URL → always hits our origin.
+  // (DRF ignores unknown query params, so this is harmless.)
+  if (!config.method || config.method.toLowerCase() === "get") {
+    config.params = { ...(config.params || {}), _: Date.now() };
+  }
   return config;
 });
 
