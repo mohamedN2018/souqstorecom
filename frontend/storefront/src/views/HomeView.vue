@@ -1,6 +1,5 @@
 <script setup>
 import { ref, onMounted } from "vue";
-import { gsap } from "gsap";
 import { useI18n } from "vue-i18n";
 import { catalogApi, vendorApi } from "@/lib/api";
 import { useCatalogStore } from "@/stores/catalog";
@@ -63,7 +62,8 @@ onMounted(async () => {
   if (deal.status === "fulfilled") deals.value = deal.value.data.results.filter((p) => p.discount_percent > 0).slice(0, 12);
   if (vens.status === "fulfilled") vendors.value = vens.value.data.results.slice(0, 12);
   loading.value = false;
-  gsap.from(".reveal", { y: 24, opacity: 0, duration: 0.6, stagger: 0.06, ease: "power2.out" });
+  // Reveal animation is pure CSS now (see .reveal in style.css) — no JS library,
+  // so content is ALWAYS visible even if a script fails to load.
 });
 
 // 🔴 Real-time: new products pop in live, no refresh.

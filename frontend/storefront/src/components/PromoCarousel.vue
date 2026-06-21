@@ -1,6 +1,5 @@
 <script setup>
 import { ref, onMounted, onBeforeUnmount } from "vue";
-import { gsap } from "gsap";
 import Icon from "@/components/Icon.vue";
 
 // Offline promo slides (gradients + text, no external images).
@@ -16,7 +15,7 @@ let timer;
 
 function go(i) {
   idx.value = (i + slides.length) % slides.length;
-  gsap.fromTo(".promo-content", { opacity: 0, x: 30 }, { opacity: 1, x: 0, duration: 0.5, ease: "power2.out" });
+  // The :key="idx" on .promo-content re-triggers a pure-CSS slide-in animation.
 }
 function start() {
   timer = setInterval(() => go(idx.value + 1), 4500);
@@ -29,7 +28,7 @@ onBeforeUnmount(() => clearInterval(timer));
   <div class="relative overflow-hidden rounded-theme shadow-lg">
     <div class="h-60 md:h-[22rem] flex items-center text-white relative"
          :style="{ background: `linear-gradient(120deg, ${slides[idx].g[0]}, ${slides[idx].g[1]})` }">
-      <div class="promo-content container-x relative z-10">
+      <div :key="idx" class="promo-content container-x relative z-10">
         <span class="pill bg-white/20 backdrop-blur mb-4">عرض حصري</span>
         <h2 class="text-3xl md:text-5xl font-extrabold max-w-lg leading-tight">{{ slides[idx].title }}</h2>
         <p class="mt-3 text-base md:text-lg opacity-90 max-w-md">{{ slides[idx].sub }}</p>

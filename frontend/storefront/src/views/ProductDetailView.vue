@@ -1,7 +1,6 @@
 <script setup>
 import { ref, onMounted, watch } from "vue";
 import { useRoute } from "vue-router";
-import { gsap } from "gsap";
 import { useI18n } from "vue-i18n";
 import { catalogApi } from "@/lib/api";
 import { useCartStore } from "@/stores/cart";
@@ -31,9 +30,7 @@ async function load() {
   activeImage.value = data.images?.[0]?.url || "";
   activeVariant.value = data.variants?.find((v) => v.is_default) || data.variants?.[0] || null;
   loading.value = false;
-  requestAnimationFrame(() =>
-    gsap.from(".pd-anim", { y: 20, opacity: 0, duration: 0.6, stagger: 0.08, ease: "power2.out" })
-  );
+  // Entrance animation is pure CSS (.pd-anim in style.css) — no JS dependency.
 }
 
 async function submitReview() {
