@@ -16,3 +16,8 @@ VENDOR_NAMESPACE = uuid.UUID("11111111-1111-1111-1111-111111111111")
 
 def vendor_id(index: int) -> uuid.UUID:
     return uuid.uuid5(VENDOR_NAMESPACE, f"vendor:{index}")
+
+
+def applicant_id(index: int) -> uuid.UUID:
+    """Owner id of a pending applicant — matches the Auth service's scheme."""
+    return uuid.uuid5(VENDOR_NAMESPACE, f"applicant:{index}")

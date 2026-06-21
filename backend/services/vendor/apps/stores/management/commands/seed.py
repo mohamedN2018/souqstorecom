@@ -13,8 +13,8 @@ from django.db import transaction
 from django.utils.text import slugify
 from faker import Faker
 
-from apps.stores.ids import vendor_id
-from apps.stores.models import StoreTheme, Vendor
+from apps.stores.ids import applicant_id, vendor_id
+from apps.stores.models import SiteSettings, StoreTheme, Vendor
 
 fake = Faker(["ar_AA", "en_US"])
 
@@ -99,6 +99,8 @@ class Command(BaseCommand):
                 country="مصر",
                 city=random.choice(CITIES),
                 is_featured=(i < 6),
+                status="active",
+                terms_accepted=True,
                 rating_avg=round(random.uniform(3.6, 5.0), 2),
                 rating_count=random.randint(12, 4200),
                 products_count=0,  # updated by catalog seeder reporting, kept simple here
@@ -115,4 +117,28 @@ class Command(BaseCommand):
             )
             created += 1
 
-        self.stdout.write(self.style.SUCCESS(f"[vendor] seeded {created} vendors + themes"))
+        # --- pending applicants awaiting admin approval ---
+        pending_names = [("متجر النخبة للهواتف", "elite-phones"), ("بوتيك الأناقة", "elegance-boutique")]
+        for i, (name, slug) in enumerate(pending_names):
+            v = Vendor.objects.create(
+                owner_id=applicant_id(i),
+                name=name,
+                slug=slug,
+                tagline="طلب افتتاح متجر جديد",
+                description="متجر مقدّم للمراجعة من قبل الإدارة.",
+                logo_url=f"/media/vendors/logo_{i}.jpg",
+                email=f"applicant{i+1}@souq.test",
+                phone="+201000000000",
+                country="مصر",
+                city="القاهرة",
+                status="pending",
+                terms_accepted=True,
+            )
+            StoreTheme.objects.create(vendor=v)
+
+        # --- ensure global site settings exist ---
+        SiteSettings.load()
+
+        self.stdout.write(self.style.SUCCESS(
+            f"[vendor] seeded {created} active vendors + 2 pending applicants + site settings"
+        ))

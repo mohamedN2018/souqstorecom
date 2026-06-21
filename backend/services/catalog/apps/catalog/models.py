@@ -126,6 +126,26 @@ class ProductVariant(models.Model):
         ordering = ("-is_default",)
 
 
+class Purchase(models.Model):
+    """
+    Record that a customer actually bought a product. Gates reviews so only
+    real buyers can rate ("verified purchase"). This is a lightweight stand-in
+    for the future Order service — same idea, recorded at checkout.
+    """
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name="purchases")
+    customer_id = models.UUIDField(db_index=True)
+    qty = models.PositiveIntegerField(default=1)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        db_table = "catalog_purchase"
+        constraints = [
+            models.UniqueConstraint(fields=["product", "customer_id"], name="uniq_purchase")
+        ]
+
+
 class Review(models.Model):
     """Customer review (customer_id -> Auth service, no FK)."""
 

@@ -35,6 +35,11 @@ class Vendor(models.Model):
     )
     is_featured = models.BooleanField(default=False)
 
+    # Application / approval workflow
+    terms_accepted = models.BooleanField(default=False)
+    rejection_reason = models.CharField(max_length=300, blank=True)
+    reviewed_at = models.DateTimeField(null=True, blank=True)
+
     rating_avg = models.DecimalField(max_digits=3, decimal_places=2, default=0)
     rating_count = models.PositiveIntegerField(default=0)
     products_count = models.PositiveIntegerField(default=0)
@@ -86,3 +91,37 @@ class StoreTheme(models.Model):
 
     def __str__(self) -> str:
         return f"Theme<{self.vendor.name}>"
+
+
+class SiteSettings(models.Model):
+    """
+    Global marketplace appearance + policies. Singleton (pk=1).
+    Only the platform super-admin may edit these — this is the site-wide theme
+    that vendors are NOT allowed to change (they only theme their own store).
+    """
+
+    id = models.PositiveSmallIntegerField(primary_key=True, default=1)
+    site_name = models.CharField(max_length=120, default="سوق ستور")
+    primary_color = models.CharField(max_length=9, default="#2563eb")
+    secondary_color = models.CharField(max_length=9, default="#1e293b")
+    accent_color = models.CharField(max_length=9, default="#f59e0b")
+    rounded = models.PositiveSmallIntegerField(default=14)
+    announcement = models.CharField(max_length=200, default="شحن مجاني للطلبات فوق 500 ج.م")
+    vendor_terms = models.TextField(
+        default=(
+            "بالتقديم لفتح متجر على سوق ستور فإنك توافق على: "
+            "بيع منتجات أصلية وقانونية، الالتزام بسياسة الأسعار والإرجاع، "
+            "تحمّل مسؤولية وصف ومخزون المنتجات، ودفع عمولة المنصة المتفق عليها. "
+            "تخضع جميع المتاجر لمراجعة الإدارة قبل التفعيل."
+        )
+    )
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        db_table = "stores_site_settings"
+        verbose_name_plural = "site settings"
+
+    @classmethod
+    def load(cls):
+        obj, _ = cls.objects.get_or_create(pk=1)
+        return obj

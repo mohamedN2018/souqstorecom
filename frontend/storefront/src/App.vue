@@ -1,12 +1,27 @@
 <script setup>
-import AppHeader from "@/components/AppHeader.vue";
+import { computed } from "vue";
+import { useRoute } from "vue-router";
+import TopBar from "@/components/layout/TopBar.vue";
+import SiteHeader from "@/components/layout/SiteHeader.vue";
+import NavBar from "@/components/layout/NavBar.vue";
 import AppFooter from "@/components/AppFooter.vue";
-import ThemeCustomizer from "@/components/ThemeCustomizer.vue";
+
+const route = useRoute();
+// Dashboards are fully isolated — no storefront chrome.
+const isDashboard = computed(() => route.meta.dashboard === true);
 </script>
 
 <template>
-  <div class="min-h-screen flex flex-col">
-    <AppHeader />
+  <!-- Isolated dashboard: render only the routed view (it brings its own shell) -->
+  <router-view v-if="isDashboard" />
+
+  <!-- Storefront -->
+  <div v-else class="min-h-screen flex flex-col">
+    <header class="sticky top-0 z-40 shadow-sm">
+      <TopBar />
+      <SiteHeader />
+      <NavBar />
+    </header>
     <main class="flex-1">
       <router-view v-slot="{ Component }">
         <transition name="fade" mode="out-in">
@@ -15,7 +30,6 @@ import ThemeCustomizer from "@/components/ThemeCustomizer.vue";
       </router-view>
     </main>
     <AppFooter />
-    <ThemeCustomizer />
   </div>
 </template>
 

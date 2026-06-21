@@ -22,9 +22,13 @@ const VARMAP = {
 export const useThemeStore = defineStore("theme", {
   state: () => ({
     ...DEFAULT,
-    ...JSON.parse(localStorage.getItem("theme") || "{}"),
+    // The admin-defined global default (restored when leaving a store page).
+    globalDefault: { ...DEFAULT },
   }),
   actions: {
+    setGlobalDefault(d) {
+      this.globalDefault = { ...this.globalDefault, ...d };
+    },
     apply() {
       const root = document.documentElement;
       for (const [key, varName] of Object.entries(VARMAP)) {
@@ -46,8 +50,9 @@ export const useThemeStore = defineStore("theme", {
       if (t.rounded != null) this.radius = t.rounded;
       this.apply();
     },
+    // Restore the admin-defined global site theme (e.g. on leaving a store).
     reset() {
-      Object.assign(this, DEFAULT);
+      Object.assign(this, this.globalDefault);
       this.apply();
     },
   },

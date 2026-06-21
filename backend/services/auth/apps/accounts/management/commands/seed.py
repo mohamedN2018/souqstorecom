@@ -28,6 +28,10 @@ def vendor_id(index: int) -> uuid.UUID:
     return uuid.uuid5(VENDOR_NAMESPACE, f"vendor:{index}")
 
 
+def applicant_id(index: int) -> uuid.UUID:
+    return uuid.uuid5(VENDOR_NAMESPACE, f"applicant:{index}")
+
+
 class Command(BaseCommand):
     help = "Seed demo users (customers, vendors, admin)"
 
@@ -76,7 +80,33 @@ class Command(BaseCommand):
             ))
         User.objects.bulk_create(customers, batch_size=1000)
 
+        # --- pending vendor applicants (await admin approval in vendor service) ---
+        applicants = []
+        for i in range(2):
+            u = User(
+                id=applicant_id(i),
+                email=f"applicant{i+1}@souq.test",
+                full_name=f"مقدّم طلب متجر {i+1}",
+                role="vendor",
+                is_verified=True,
+                password=hashed,
+            )
+            applicants.append(u)
+        User.objects.bulk_create(applicants)
+
+        # --- demo staff member under vendor1's store (scoped permissions) ---
+        staff = User(
+            email="staff1@souq.test",
+            full_name="موظف متجر",
+            role="staff",
+            vendor_id=vendor_id(0),  # works for vendor1's store
+            permissions=["manage_products", "view_analytics"],
+            is_verified=True,
+            password=hashed,
+        )
+        staff.save()
+
         self.stdout.write(self.style.SUCCESS(
-            f"[auth] seeded {n_vendors} vendors + {n_customers} customers (+admin). "
-            f"Password for all: {DEMO_PASSWORD}"
+            f"[auth] seeded {n_vendors} vendors + {n_customers} customers + 2 applicants "
+            f"+ 1 staff (+admin). Password for all: {DEMO_PASSWORD}"
         ))

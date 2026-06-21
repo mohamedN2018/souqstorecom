@@ -8,6 +8,9 @@ drf-spectacular==0.28.0
 django-filter==24.3
 celery==5.4.0
 redis==5.2.1
+channels==4.2.0
+channels-redis==4.2.1
+daphne==4.1.2
 gunicorn==23.0.0
 Faker==33.1.0
 Pillow==11.0.0

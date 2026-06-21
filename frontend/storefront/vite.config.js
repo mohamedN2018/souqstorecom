@@ -13,11 +13,16 @@ export default defineConfig({
   server: {
     host: "0.0.0.0",
     port: 5173,
-    watch: { usePolling: true }, // reliable HMR inside Docker on Windows
+    watch: { usePolling: true }, // reliable file watching inside Docker on Windows
+    // The browser reaches us on host port 5280 (mapped to 5173). The HMR
+    // websocket must therefore connect back on 5280, otherwise live-reload
+    // silently fails and you'd have to refresh manually.
+    hmr: { clientPort: 5280 },
     // Same-origin proxy → no CORS, browser only ever talks to the dev server.
     proxy: {
       "/api": { target: GATEWAY, changeOrigin: true },
       "/media": { target: GATEWAY, changeOrigin: true },
+      "/ws": { target: GATEWAY, ws: true, changeOrigin: true },
     },
   },
 });

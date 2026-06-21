@@ -5,26 +5,50 @@ import { gsap } from "gsap";
 import { useI18n } from "vue-i18n";
 import { catalogApi } from "@/lib/api";
 import { useCartStore } from "@/stores/cart";
+import { useAuthStore } from "@/stores/auth";
 
 const { t } = useI18n();
 const route = useRoute();
 const cart = useCartStore();
+const auth = useAuthStore();
 
 const product = ref(null);
 const activeImage = ref("");
 const activeVariant = ref(null);
 const loading = ref(true);
 
+// review form
+const reviews = ref([]);
+const myReview = ref({ rating: 5, title: "", body: "" });
+const reviewMsg = ref("");
+const submitting = ref(false);
+
 async function load() {
   loading.value = true;
   const { data } = await catalogApi.product(route.params.slug);
   product.value = data;
+  reviews.value = data.recent_reviews || [];
   activeImage.value = data.images?.[0]?.url || "";
   activeVariant.value = data.variants?.find((v) => v.is_default) || data.variants?.[0] || null;
   loading.value = false;
   requestAnimationFrame(() =>
     gsap.from(".pd-anim", { y: 20, opacity: 0, duration: 0.6, stagger: 0.08, ease: "power2.out" })
   );
+}
+
+async function submitReview() {
+  reviewMsg.value = "";
+  submitting.value = true;
+  try {
+    const { data } = await catalogApi.addReview(product.value.slug, myReview.value);
+    reviews.value.unshift(data);
+    myReview.value = { rating: 5, title: "", body: "" };
+    reviewMsg.value = "✅ شكراً، تم نشر تقييمك";
+  } catch (e) {
+    reviewMsg.value = e.response?.data?.detail || "تعذّر إضافة التقييم";
+  } finally {
+    submitting.value = false;
+  }
 }
 
 onMounted(load);
@@ -96,18 +120,47 @@ watch(() => route.params.slug, load);
     </div>
 
     <!-- reviews -->
-    <section v-if="product.recent_reviews?.length" class="mt-12">
-      <h2 class="text-xl font-extrabold mb-4">{{ t("product.reviews") }}</h2>
-      <div class="grid md:grid-cols-2 gap-4">
-        <div v-for="r in product.recent_reviews" :key="r.id" class="card p-4">
+    <section class="mt-12">
+      <h2 class="text-xl font-extrabold mb-4">{{ t("product.reviews") }} ({{ product.rating_count }})</h2>
+
+      <!-- review form: only verified buyers succeed (server-enforced) -->
+      <div class="card p-5 mb-6 max-w-2xl">
+        <div v-if="!auth.isAuthenticated" class="text-sm text-ink/60">
+          <router-link :to="{ name: 'login' }" class="text-primary font-bold">سجّل الدخول</router-link>
+          لتقييم المنتج (يلزم شراؤه أولاً).
+        </div>
+        <form v-else @submit.prevent="submitReview" class="space-y-3">
+          <div class="flex items-center gap-2">
+            <span class="text-sm font-semibold">تقييمك:</span>
+            <button v-for="n in 5" :key="n" type="button" @click="myReview.rating = n"
+                    class="text-2xl" :class="n <= myReview.rating ? 'text-amber-500' : 'text-ink/20'">★</button>
+          </div>
+          <input v-model="myReview.title" placeholder="عنوان التقييم"
+                 class="w-full rounded-theme border border-black/10 px-3 py-2" />
+          <textarea v-model="myReview.body" placeholder="اكتب تجربتك مع المنتج..."
+                    class="w-full rounded-theme border border-black/10 px-3 py-2" rows="3"></textarea>
+          <div class="flex items-center gap-3">
+            <button :disabled="submitting" class="btn-primary">نشر التقييم</button>
+            <span v-if="reviewMsg" class="text-sm font-semibold"
+                  :class="reviewMsg.startsWith('✅') ? 'text-green-600' : 'text-red-500'">{{ reviewMsg }}</span>
+          </div>
+          <p class="text-xs text-ink/40">✔ التقييم متاح فقط لمن اشترى المنتج فعلاً (مشترٍ موثّق).</p>
+        </form>
+      </div>
+
+      <div v-if="reviews.length" class="grid md:grid-cols-2 gap-4">
+        <div v-for="r in reviews" :key="r.id" class="card p-4">
           <div class="flex items-center justify-between">
-            <span class="font-bold">{{ r.customer_name }}</span>
+            <span class="font-bold">{{ r.customer_name }}
+              <span v-if="r.is_verified_purchase" class="text-[10px] text-green-600 font-bold">✔ شراء موثّق</span>
+            </span>
             <span class="text-amber-500 text-sm">{{ "★".repeat(r.rating) }}</span>
           </div>
           <div class="font-semibold text-sm mt-1">{{ r.title }}</div>
           <p class="text-sm text-ink/60 mt-1">{{ r.body }}</p>
         </div>
       </div>
+      <p v-else class="text-ink/40 text-sm">لا توجد تقييمات بعد — كن أول من يقيّم.</p>
     </section>
   </div>
 </template>

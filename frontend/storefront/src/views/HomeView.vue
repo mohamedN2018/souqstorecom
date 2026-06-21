@@ -2,16 +2,23 @@
 import { ref, onMounted } from "vue";
 import { gsap } from "gsap";
 import { useI18n } from "vue-i18n";
-import { catalogApi, vendorApi } from "@/lib/api";
+import { catalogApi } from "@/lib/api";
+import { useCatalogStore } from "@/stores/catalog";
+import { useProductFeed } from "@/composables/useProductFeed";
 import ProductCard from "@/components/ProductCard.vue";
+import ProductCarousel from "@/components/ProductCarousel.vue";
+import PromoCarousel from "@/components/PromoCarousel.vue";
+import CategorySidebar from "@/components/layout/CategorySidebar.vue";
 
 const { t } = useI18n();
-const categories = ref([]);
+const catalog = useCatalogStore();
+
 const featured = ref([]);
-const vendors = ref([]);
+const bestSellers = ref([]);
+const deals = ref([]);
+const liveArrivals = ref([]);
 const loading = ref(true);
 
-// Flash-sale countdown
 const countdown = ref("00:00:00");
 function startCountdown() {
   const end = new Date();
@@ -27,87 +34,92 @@ function startCountdown() {
 
 onMounted(async () => {
   startCountdown();
+  catalog.loadCategories();
   try {
-    const [cats, feat, vens] = await Promise.all([
-      catalogApi.categories(),
-      catalogApi.products({ featured: true, ordering: "-sold_count" }),
-      vendorApi.list({ ordering: "-rating_avg" }),
+    const [feat, best, deal] = await Promise.all([
+      catalogApi.products({ featured: true, ordering: "-rating_avg" }),
+      catalogApi.products({ ordering: "-sold_count" }),
+      catalogApi.products({ ordering: "-created_at" }),
     ]);
-    categories.value = cats.data.filter((c) => !c.parent);
     featured.value = feat.data.results.slice(0, 12);
-    vendors.value = vens.data.results.slice(0, 8);
+    bestSellers.value = best.data.results.slice(0, 12);
+    deals.value = deal.data.results.filter((p) => p.discount_percent > 0).slice(0, 12);
   } finally {
     loading.value = false;
   }
+  gsap.from(".reveal", { y: 24, opacity: 0, duration: 0.6, stagger: 0.08, ease: "power2.out" });
+});
 
-  gsap.from(".hero-anim", { y: 30, opacity: 0, duration: 0.8, stagger: 0.12, ease: "power3.out" });
-  gsap.from(".cat-chip", { scale: 0.8, opacity: 0, duration: 0.5, stagger: 0.05, delay: 0.3, ease: "back.out(1.6)" });
+// 🔴 Real-time: new products pop in live, no refresh.
+useProductFeed((data) => {
+  if (data.event === "product.created" && data.product) {
+    liveArrivals.value.unshift(data.product);
+    liveArrivals.value = liveArrivals.value.slice(0, 8);
+  }
 });
 </script>
 
 <template>
-  <!-- HERO -->
-  <section class="relative overflow-hidden text-white"
-           style="background: linear-gradient(135deg, var(--c-primary), var(--c-secondary))">
-    <div class="container-x py-16 md:py-24 relative z-10">
-      <h1 class="hero-anim text-3xl md:text-5xl font-extrabold leading-tight max-w-2xl">
-        {{ t("home.hero_title") }}
-      </h1>
-      <p class="hero-anim mt-4 text-lg opacity-90 max-w-xl">{{ t("home.hero_sub") }}</p>
-      <router-link :to="{ name: 'products' }"
-                   class="hero-anim inline-block mt-8 bg-white text-ink font-bold px-7 py-3 rounded-theme hover:-translate-y-1 transition"
-                   style="color: var(--c-primary)">
-        {{ t("home.shop_now") }} ←
-      </router-link>
-    </div>
-    <div class="absolute -top-20 -left-20 w-80 h-80 rounded-full bg-white/10"></div>
-    <div class="absolute -bottom-24 right-10 w-96 h-96 rounded-full bg-white/10"></div>
-  </section>
+  <div class="container-x py-6 space-y-10">
+    <!-- TOP: sidebar + offers carousel -->
+    <section class="grid lg:grid-cols-[240px_1fr] gap-5">
+      <CategorySidebar class="hidden lg:block reveal" />
+      <PromoCarousel class="reveal" />
+    </section>
 
-  <!-- FLASH BAR -->
-  <div class="text-white" style="background: var(--c-accent)">
-    <div class="container-x py-3 flex items-center justify-center gap-3 font-bold">
-      ⚡ {{ t("home.flash") }}
-      <span class="font-mono bg-black/20 px-3 py-1 rounded-lg tabular-nums">{{ countdown }}</span>
-    </div>
-  </div>
+    <!-- Live new arrivals (appears only when a vendor adds a product) -->
+    <transition name="fade">
+      <section v-if="liveArrivals.length" class="reveal">
+        <div class="flex items-center gap-2 mb-3">
+          <span class="w-2.5 h-2.5 rounded-full bg-red-500 animate-pulse"></span>
+          <h2 class="text-xl font-extrabold">وصل حالاً 🔴 (مباشر)</h2>
+        </div>
+        <ProductCarousel :products="liveArrivals" />
+      </section>
+    </transition>
 
-  <div class="container-x py-10 space-y-12">
-    <!-- CATEGORIES -->
-    <section>
-      <h2 class="text-2xl font-extrabold mb-5">{{ t("home.categories") }}</h2>
-      <div class="flex flex-wrap gap-3">
-        <router-link v-for="c in categories" :key="c.id"
+    <!-- FLASH DEALS -->
+    <section class="reveal">
+      <div class="flex items-center justify-between mb-4">
+        <h2 class="text-xl md:text-2xl font-extrabold flex items-center gap-2">⚡ {{ t("home.flash") }}</h2>
+        <span class="font-mono text-white px-3 py-1 rounded-lg tabular-nums" style="background: var(--c-accent)">{{ countdown }}</span>
+      </div>
+      <div v-if="loading" class="text-center py-10 text-ink/40">{{ t("common.loading") }}</div>
+      <ProductCarousel v-else :products="deals" />
+    </section>
+
+    <!-- CATEGORIES GRID -->
+    <section class="reveal">
+      <h2 class="text-xl md:text-2xl font-extrabold mb-4">{{ t("home.categories") }}</h2>
+      <div class="grid grid-cols-3 md:grid-cols-4 lg:grid-cols-8 gap-3">
+        <router-link v-for="c in catalog.topCategories" :key="c.id"
                      :to="{ name: 'products', query: { category: c.slug } }"
-                     class="cat-chip card px-4 py-3 font-semibold hover:text-primary hover:border-primary transition">
-          {{ c.name }}
-          <span class="text-xs text-ink/50">({{ c.products_count }})</span>
+                     class="card p-4 flex flex-col items-center gap-2 hover:border-primary hover:-translate-y-1 transition text-center">
+          <span class="w-12 h-12 grid place-items-center rounded-full text-2xl"
+                style="background: color-mix(in srgb, var(--c-primary) 12%, transparent)">🛍️</span>
+          <span class="text-xs font-bold">{{ c.name }}</span>
         </router-link>
+      </div>
+    </section>
+
+    <!-- MOST ORDERED (replaces top vendors) -->
+    <section class="reveal">
+      <div class="flex items-center justify-between mb-4">
+        <h2 class="text-xl md:text-2xl font-extrabold">🔥 الأكثر طلباً</h2>
+        <router-link :to="{ name: 'products', query: { ordering: '-sold_count' } }" class="text-sm text-primary font-bold">عرض الكل</router-link>
+      </div>
+      <div v-if="loading" class="text-center py-10 text-ink/40">{{ t("common.loading") }}</div>
+      <div v-else class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
+        <ProductCard v-for="p in bestSellers" :key="p.id" :product="p" />
       </div>
     </section>
 
     <!-- FEATURED -->
-    <section>
-      <h2 class="text-2xl font-extrabold mb-5">{{ t("home.featured") }}</h2>
-      <div v-if="loading" class="text-center py-10 text-ink/50">{{ t("common.loading") }}</div>
+    <section class="reveal">
+      <h2 class="text-xl md:text-2xl font-extrabold mb-4">{{ t("home.featured") }}</h2>
+      <div v-if="loading" class="text-center py-10 text-ink/40">{{ t("common.loading") }}</div>
       <div v-else class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
         <ProductCard v-for="p in featured" :key="p.id" :product="p" />
-      </div>
-    </section>
-
-    <!-- VENDORS -->
-    <section>
-      <h2 class="text-2xl font-extrabold mb-5">{{ t("home.top_vendors") }}</h2>
-      <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <router-link v-for="v in vendors" :key="v.id"
-                     :to="{ name: 'vendor', params: { slug: v.slug } }"
-                     class="card p-4 flex items-center gap-3 hover:border-primary transition">
-          <img :src="v.logo_url" class="w-12 h-12 rounded-full object-cover" />
-          <div>
-            <div class="font-bold text-sm">{{ v.name }}</div>
-            <div class="text-xs text-amber-500">★ {{ v.rating_avg }}</div>
-          </div>
-        </router-link>
       </div>
     </section>
   </div>

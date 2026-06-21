@@ -10,7 +10,17 @@ from .managers import UserManager
 class Role(models.TextChoices):
     CUSTOMER = "customer", _("Customer")
     VENDOR = "vendor", _("Vendor")
+    STAFF = "staff", _("Store staff")
     ADMIN = "admin", _("Admin")
+
+
+# Permission keys a vendor owner may grant to a staff member.
+STAFF_PERMISSIONS = [
+    "manage_products",   # add/edit/delete products
+    "view_orders",       # see store orders
+    "manage_theme",      # edit store appearance
+    "view_analytics",    # see store stats
+]
 
 
 class User(AbstractBaseUser, PermissionsMixin):
@@ -28,6 +38,13 @@ class User(AbstractBaseUser, PermissionsMixin):
     role = models.CharField(
         max_length=20, choices=Role.choices, default=Role.CUSTOMER, db_index=True
     )
+
+    # For staff: the owner (vendor) user id they work for. For vendor owners it
+    # may mirror their own id. Embedded in the JWT so other services can scope
+    # actions to the right store without a cross-service lookup.
+    vendor_id = models.UUIDField(null=True, blank=True, db_index=True)
+    # Granted capability keys (see STAFF_PERMISSIONS). Empty for owners (full).
+    permissions = models.JSONField(default=list, blank=True)
 
     is_active = models.BooleanField(default=True)
     is_staff = models.BooleanField(default=False)
