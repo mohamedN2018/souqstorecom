@@ -216,3 +216,11 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+
+# ============================================================
+# Project source override — the generic `lib/` rule above wrongly ignores the
+# Vue frontend's src/lib folder (contains api.js). Re-include it so the
+# GitHub/Dokploy build has every file it needs.
+# ============================================================
+!frontend/storefront/src/lib/
+!frontend/storefront/src/lib/**
