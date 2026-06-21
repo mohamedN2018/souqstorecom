@@ -19,10 +19,13 @@ export default defineConfig({
     // silently fails and you'd have to refresh manually.
     hmr: { clientPort: 5280 },
     // Same-origin proxy → no CORS, browser only ever talks to the dev server.
+    // "/sqapi" and "/sqws" are rewritten to "/api" and "/ws" (the gateway's real
+    // paths) — matching production, where these unique prefixes dodge another
+    // app that hijacks "/api" and "/ws" on the shared edge.
     proxy: {
-      "/api": { target: GATEWAY, changeOrigin: true },
+      "/sqapi": { target: GATEWAY, changeOrigin: true, rewrite: (p) => p.replace(/^\/sqapi/, "/api") },
       "/media": { target: GATEWAY, changeOrigin: true },
-      "/ws": { target: GATEWAY, ws: true, changeOrigin: true },
+      "/sqws": { target: GATEWAY, ws: true, changeOrigin: true, rewrite: (p) => p.replace(/^\/sqws/, "/ws") },
     },
   },
 });

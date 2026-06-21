@@ -19,21 +19,12 @@ services:
       dockerfile: Dockerfile.prod
     depends_on: [gateway]
     restart: unless-stopped
+    # Routing: Dokploy's "Domains" tab sends Host(${DOMAIN}) path "/" → web:80.
+    # The frontend talks to the backend via the UNIQUE prefixes "/sqapi" and
+    # "/sqws" (not "/api"/"/ws", which another app on the shared edge hijacks).
+    # Those prefixes fall under the "/" route, so they reach web with no extra
+    # Traefik labels and no priority war. `dokploy-network` lets Traefik reach us.
     networks: [souq-net, dokploy-network]
-    # The site (path "/") is routed by Dokploy's "Domains" tab → web:80.
-    # BUT another app on the same Traefik claims a broad `/api` route and was
-    # stealing our backend traffic (login → 405). This high-priority router
-    # pins /api, /ws and /media for OUR host to OUR web container (which proxies
-    # them to the gateway), so it always wins over the other app's /api route.
-    labels:
-      - "traefik.enable=true"
-      - "traefik.docker.network=dokploy-network"
-      - "traefik.http.routers.souq-api.rule=Host(`${DOMAIN}`) && (PathPrefix(`/api`) || PathPrefix(`/ws`) || PathPrefix(`/media`))"
-      - "traefik.http.routers.souq-api.priority=5000"
-      - "traefik.http.routers.souq-api.entrypoints=websecure"
-      - "traefik.http.routers.souq-api.tls.certresolver=letsencrypt"
-      - "traefik.http.routers.souq-api.service=souq-api-svc"
-      - "traefik.http.services.souq-api-svc.loadbalancer.server.port=80"
 
   # ---------------- internal API gateway ----------------
   gateway:

@@ -1,8 +1,11 @@
 import axios from "axios";
 
-// Same-origin: Vite (dev) / nginx (prod) proxy /api to the gateway.
+// Same-origin: Vite (dev) / nginx (prod) proxy this prefix to the gateway.
+// NOTE: we use the unique "/sqapi" prefix (not "/api") because another app on
+// the shared platform/edge hijacks "/api" for this domain. The web nginx and
+// Vite proxy rewrite "/sqapi" → "/api" before reaching the gateway.
 const api = axios.create({
-  baseURL: "/api/v1",
+  baseURL: "/sqapi/v1",
   timeout: 15000,
 });
 

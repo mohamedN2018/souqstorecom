@@ -11,7 +11,9 @@ export function useProductFeed(onEvent) {
   let retry;
 
   function connect() {
-    ws = new WebSocket(`${proto}://${location.host}/ws/products/`);
+    // Unique "/sqws" prefix (not "/ws") — another app on the shared edge
+    // hijacks "/ws" for this domain. nginx/Vite rewrite "/sqws" → "/ws".
+    ws = new WebSocket(`${proto}://${location.host}/sqws/products/`);
     ws.onmessage = (e) => {
       try {
         const data = JSON.parse(e.data);
