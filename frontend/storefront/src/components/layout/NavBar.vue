@@ -10,7 +10,7 @@ onMounted(() => catalog.loadCategories());
 </script>
 
 <template>
-  <nav class="text-white shadow-md" style="background: linear-gradient(90deg, var(--c-primary), color-mix(in srgb, var(--c-primary) 78%, var(--c-secondary)))">
+  <nav class="text-white shadow-sm" style="background: var(--c-secondary)">
     <div class="container-x flex items-center gap-1.5 h-12 overflow-x-auto no-scrollbar">
       <button @click="ui.openDrawer()"
               class="flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-white/15 hover:bg-white/25 font-bold whitespace-nowrap text-sm shrink-0 transition">

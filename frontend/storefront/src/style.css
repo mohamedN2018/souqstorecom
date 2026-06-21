@@ -14,18 +14,18 @@
    `primary/secondary/accent/...` utility reads from here.
 ----------------------------------------------------------------- */
 :root {
-  --c-primary: #4f46e5;   /* indigo — modern, high-contrast */
-  --c-secondary: #0f172a; /* slate ink for the top bar */
-  --c-accent: #f43f5e;    /* rose — energetic deal/CTA accent */
+  --c-primary: #2563eb;   /* trustworthy marketplace blue (Amazon/Noon vibe) */
+  --c-secondary: #131a26; /* dark ink bar */
+  --c-accent: #f59e0b;    /* warm orange for deals / CTAs */
   --c-surface: #ffffff;
-  --c-ink: #0f172a;
-  --c-muted: #64748b;
-  --c-radius: 16px;
+  --c-ink: #0f1722;
+  --c-muted: #6b7280;
+  --c-radius: 12px;       /* tighter, professional corners */
 
-  /* Soft, layered shadows (modern "floating card" depth) */
-  --shadow-sm: 0 1px 2px rgb(15 23 42 / 0.04), 0 1px 3px rgb(15 23 42 / 0.06);
-  --shadow-md: 0 4px 12px rgb(15 23 42 / 0.06), 0 2px 4px rgb(15 23 42 / 0.04);
-  --shadow-lg: 0 18px 40px -12px rgb(15 23 42 / 0.18), 0 8px 16px -8px rgb(15 23 42 / 0.1);
+  /* Crisp, restrained shadows (clean e-commerce, not flashy) */
+  --shadow-sm: 0 1px 2px rgb(17 24 39 / 0.05), 0 1px 1px rgb(17 24 39 / 0.04);
+  --shadow-md: 0 2px 8px rgb(17 24 39 / 0.06), 0 1px 3px rgb(17 24 39 / 0.05);
+  --shadow-lg: 0 12px 28px -10px rgb(17 24 39 / 0.16), 0 6px 12px -8px rgb(17 24 39 / 0.08);
 }
 
 * {
@@ -39,12 +39,8 @@ html {
 
 body {
   font-family: "Cairo", system-ui, sans-serif;
-  /* subtle gradient canvas behind floating white cards */
-  background:
-    radial-gradient(1200px 600px at 100% -10%, color-mix(in srgb, var(--c-primary) 7%, transparent), transparent 60%),
-    radial-gradient(900px 500px at 0% 0%, color-mix(in srgb, var(--c-accent) 6%, transparent), transparent 55%),
-    #f6f7fb;
-  background-attachment: fixed;
+  /* clean light-grey marketplace canvas behind crisp white cards */
+  background: #eef0f2;
   color: var(--c-ink);
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
@@ -84,20 +80,15 @@ body {
   align-items: center;
   justify-content: center;
   gap: 0.5rem;
-  background: linear-gradient(135deg, var(--c-primary), color-mix(in srgb, var(--c-primary) 70%, #000));
+  background: var(--c-primary);
   color: #fff;
   border-radius: calc(var(--c-radius) * 0.7);
-  padding: 0.65rem 1.25rem;
+  padding: 0.6rem 1.2rem;
   font-weight: 700;
-  box-shadow: 0 8px 20px -8px color-mix(in srgb, var(--c-primary) 70%, transparent);
-  transition: transform 0.15s ease, box-shadow 0.2s ease, filter 0.15s ease;
+  transition: background 0.15s ease, transform 0.1s ease;
 }
-.btn-primary:hover {
-  filter: brightness(1.05);
-  transform: translateY(-2px);
-  box-shadow: 0 14px 28px -10px color-mix(in srgb, var(--c-primary) 75%, transparent);
-}
-.btn-primary:active { transform: translateY(0) scale(0.98); }
+.btn-primary:hover { background: color-mix(in srgb, var(--c-primary) 88%, #000); }
+.btn-primary:active { transform: scale(0.98); }
 
 .btn-ghost {
   display: inline-flex;
@@ -115,14 +106,14 @@ body {
 
 .card {
   background: var(--c-surface);
-  border: 1px solid rgb(15 23 42 / 0.06);
+  border: 1px solid rgb(17 24 39 / 0.08);
   border-radius: var(--c-radius);
   box-shadow: var(--shadow-sm);
-  transition: box-shadow 0.25s ease, transform 0.25s ease, border-color 0.25s ease;
+  transition: box-shadow 0.2s ease, border-color 0.2s ease;
 }
 .card:hover {
-  box-shadow: var(--shadow-lg);
-  border-color: color-mix(in srgb, var(--c-primary) 25%, transparent);
+  box-shadow: var(--shadow-md);
+  border-color: color-mix(in srgb, var(--c-primary) 35%, rgb(17 24 39 / 0.08));
 }
 
 /* Frosted glass surface (header / sticky chrome) */
