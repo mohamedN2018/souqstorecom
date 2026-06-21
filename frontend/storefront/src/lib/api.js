@@ -10,14 +10,32 @@ const api = axios.create({
   timeout: 15000,
 });
 
-// Attach JWT if present + bust stale shared-edge caches.
+// Is a JWT structurally valid AND not expired? A stale/expired token must NOT
+// be sent, because DRF's JWT auth rejects the WHOLE request with 401 — even on
+// public (AllowAny) endpoints like products/categories — which silently hides
+// all data. (This was the "no data showing" bug.)
+function tokenUsable(token) {
+  try {
+    const payload = JSON.parse(atob(token.split(".")[1]));
+    return payload.exp ? payload.exp * 1000 > Date.now() : true;
+  } catch {
+    return false;
+  }
+}
+function clearAuth() {
+  ["access", "refresh", "user"].forEach((k) => localStorage.removeItem(k));
+}
+
+// Attach JWT only if usable + bust stale shared-edge caches.
 api.interceptors.request.use((config) => {
   const token = localStorage.getItem("access");
-  if (token) config.headers.Authorization = `Bearer ${token}`;
-  // A stale CDN/edge cache (from when another app briefly answered our paths)
-  // can keep serving empty/foreign responses for API GETs near some regions.
-  // A unique query param makes every GET a fresh URL → always hits our origin.
-  // (DRF ignores unknown query params, so this is harmless.)
+  if (token && tokenUsable(token)) {
+    config.headers.Authorization = `Bearer ${token}`;
+  } else if (token) {
+    clearAuth(); // drop a stale token so public endpoints don't 401
+  }
+  // A unique query param makes every GET a fresh URL → bypasses any stale
+  // CDN/edge cache. (DRF ignores unknown query params, so this is harmless.)
   if (!config.method || config.method.toLowerCase() === "get") {
     config.params = { ...(config.params || {}), _: Date.now() };
   }
@@ -37,10 +55,28 @@ export function rewriteMedia(value) {
   }
   return value;
 }
-api.interceptors.response.use((res) => {
-  if (res.data) res.data = rewriteMedia(res.data);
-  return res;
-});
+api.interceptors.response.use(
+  (res) => {
+    if (res.data) res.data = rewriteMedia(res.data);
+    return res;
+  },
+  (error) => {
+    // A 401 means the sent token is invalid/expired (e.g. JWT signing key
+    // changed between deploys). Drop it; if the request carried that token,
+    // retry ONCE anonymously so public data still loads instead of vanishing.
+    if (error.response?.status === 401) {
+      const cfg = error.config || {};
+      const hadAuth = !!cfg.headers?.Authorization;
+      clearAuth();
+      if (hadAuth && !cfg._retriedAnon) {
+        cfg._retriedAnon = true;
+        if (cfg.headers) delete cfg.headers.Authorization;
+        return api.request(cfg);
+      }
+    }
+    return Promise.reject(error);
+  }
+);
 
 export default api;
 
