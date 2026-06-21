@@ -6,6 +6,14 @@ import { useCatalogStore } from "@/stores/catalog";
 import { useThemeStore } from "@/stores/theme";
 import { useProductFeed } from "@/composables/useProductFeed";
 import DashboardShell from "@/components/dashboard/DashboardShell.vue";
+import Icon from "@/components/Icon.vue";
+
+const STAT_CARDS = [
+  { key: "total", label: "المنتجات", icon: "package", color: "#4f46e5" },
+  { key: "active", label: "نشطة", icon: "check", color: "#16a34a" },
+  { key: "featured", label: "مميزة", icon: "sparkles", color: "#d97706" },
+  { key: "sold", label: "إجمالي المبيعات", icon: "chart", color: "#e11d48" },
+];
 
 const auth = useAuthStore();
 const catalog = useCatalogStore();
@@ -20,12 +28,12 @@ const isOwner = computed(() => auth.role === "vendor");
 
 const nav = computed(() => {
   const items = [];
-  if (isOwner.value || auth.can("view_analytics")) items.push({ key: "overview", label: "نظرة عامة", icon: "📊" });
-  if (isOwner.value || auth.can("manage_products")) items.push({ key: "products", label: "المنتجات", icon: "📦" });
-  if (isOwner.value || auth.can("manage_products")) items.push({ key: "form", label: "إضافة منتج", icon: "➕" });
-  if (isOwner.value) items.push({ key: "profile", label: "بيانات المتجر", icon: "🧾" });
-  if (isOwner.value) items.push({ key: "appearance", label: "ألوان المتجر", icon: "🎨" });
-  if (isOwner.value) items.push({ key: "staff", label: "الموظفون", icon: "👥" });
+  if (isOwner.value || auth.can("view_analytics")) items.push({ key: "overview", label: "نظرة عامة", icon: "chart" });
+  if (isOwner.value || auth.can("manage_products")) items.push({ key: "products", label: "المنتجات", icon: "package" });
+  if (isOwner.value || auth.can("manage_products")) items.push({ key: "form", label: "إضافة منتج", icon: "plus" });
+  if (isOwner.value) items.push({ key: "profile", label: "بيانات المتجر", icon: "store" });
+  if (isOwner.value) items.push({ key: "appearance", label: "ألوان المتجر", icon: "palette" });
+  if (isOwner.value) items.push({ key: "staff", label: "الموظفون", icon: "user" });
   return items;
 });
 
@@ -188,24 +196,39 @@ useProductFeed((ev) => {
       <!-- OVERVIEW -->
       <div v-if="tab === 'overview'" class="space-y-6">
         <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
-          <div class="bg-white rounded-2xl p-5 border border-black/5"><div class="text-3xl font-extrabold">{{ stats.total }}</div><div class="text-sm text-ink/50">المنتجات</div></div>
-          <div class="bg-white rounded-2xl p-5 border border-black/5"><div class="text-3xl font-extrabold text-green-600">{{ stats.active }}</div><div class="text-sm text-ink/50">نشطة</div></div>
-          <div class="bg-white rounded-2xl p-5 border border-black/5"><div class="text-3xl font-extrabold text-primary">{{ stats.featured }}</div><div class="text-sm text-ink/50">مميزة</div></div>
-          <div class="bg-white rounded-2xl p-5 border border-black/5"><div class="text-3xl font-extrabold text-amber-500">{{ stats.sold.toLocaleString() }}</div><div class="text-sm text-ink/50">إجمالي المبيعات</div></div>
+          <div v-for="c in STAT_CARDS" :key="c.key"
+               class="bg-white rounded-2xl p-5 border border-black/5 shadow-sm flex items-center gap-4">
+            <span class="grid place-items-center w-12 h-12 rounded-xl shrink-0"
+                  :style="{ background: `color-mix(in srgb, ${c.color} 12%, transparent)`, color: c.color }">
+              <Icon :name="c.icon" class="w-6 h-6" />
+            </span>
+            <div class="min-w-0">
+              <div class="text-2xl font-extrabold" :style="{ color: c.color }">
+                {{ c.key === 'sold' ? stats.sold.toLocaleString() : stats[c.key] }}
+              </div>
+              <div class="text-xs text-ink/50">{{ c.label }}</div>
+            </div>
+          </div>
         </div>
-        <div class="bg-white rounded-2xl p-5 border border-black/5 flex items-center justify-between">
-          <div><h3 class="font-extrabold">إدارة سريعة</h3><p class="text-sm text-ink/50">أضف منتجاً جديداً يظهر فوراً في متجرك.</p></div>
-          <button @click="newProduct" class="btn-primary">➕ منتج جديد</button>
+        <div class="rounded-2xl p-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4 text-white shadow-lg"
+             style="background: linear-gradient(135deg, var(--c-primary), var(--c-accent));">
+          <div>
+            <h3 class="font-extrabold text-lg">أضف منتجاً جديداً</h3>
+            <p class="text-sm opacity-90">يظهر فوراً في متجرك ولكل العملاء — مباشر بدون تحديث.</p>
+          </div>
+          <button @click="newProduct" class="bg-white text-ink font-bold px-5 py-2.5 rounded-xl flex items-center gap-2 hover:-translate-y-0.5 transition shrink-0">
+            <Icon name="plus" class="w-5 h-5" /> منتج جديد
+          </button>
         </div>
       </div>
 
       <!-- PRODUCTS -->
       <div v-else-if="tab === 'products'">
         <div class="flex items-center justify-between mb-4">
-          <h2 class="text-lg font-extrabold">منتجاتي ({{ products.length }})
-            <span class="text-xs text-green-600 mr-2"><span class="inline-block w-2 h-2 rounded-full bg-green-500 animate-pulse"></span> مباشر</span>
+          <h2 class="text-lg font-extrabold flex items-center gap-2">منتجاتي ({{ products.length }})
+            <span class="pill bg-green-100 text-green-600 text-[11px]"><span class="inline-block w-2 h-2 rounded-full bg-green-500 animate-pulse"></span> مباشر</span>
           </h2>
-          <button @click="newProduct" class="btn-primary text-sm">➕ إضافة</button>
+          <button @click="newProduct" class="btn-primary text-sm"><Icon name="plus" class="w-4 h-4" /> إضافة</button>
         </div>
         <div v-if="!products.length" class="bg-white rounded-2xl p-8 text-center text-ink/50">لا منتجات بعد.</div>
         <div v-else class="grid sm:grid-cols-2 xl:grid-cols-3 gap-4">
@@ -219,8 +242,8 @@ useProductFeed((ev) => {
               <div class="font-semibold text-sm line-clamp-1">{{ p.name }}</div>
               <div class="text-primary font-extrabold mt-1">{{ Number(p.price).toLocaleString() }} ج.م</div>
               <div class="flex gap-2 mt-3">
-                <button @click="editProduct(p)" class="flex-1 bg-black/5 hover:bg-black/10 text-sm font-bold py-1.5 rounded-lg">✏️ تعديل</button>
-                <button @click="removeProduct(p.id)" class="bg-red-50 text-red-600 text-sm font-bold py-1.5 px-3 rounded-lg">حذف</button>
+                <button @click="editProduct(p)" class="flex-1 flex items-center justify-center gap-1.5 bg-black/5 hover:bg-primary/10 hover:text-primary text-sm font-bold py-2 rounded-lg transition"><Icon name="edit" class="w-4 h-4" /> تعديل</button>
+                <button @click="removeProduct(p.id)" class="grid place-items-center bg-red-50 text-red-600 hover:bg-red-100 py-2 px-3 rounded-lg transition" aria-label="حذف"><Icon name="trash" class="w-4 h-4" /></button>
               </div>
             </div>
           </div>
@@ -270,7 +293,7 @@ useProductFeed((ev) => {
                   <div class="text-xs font-semibold line-clamp-1">{{ p.name }}</div>
                   <div class="text-primary font-bold text-xs">{{ Number(p.price).toLocaleString() }} ج.م</div>
                 </div>
-                <button @click="editProduct(p)" class="text-xs text-ink/40 hover:text-primary">✏️</button>
+                <button @click="editProduct(p)" class="grid place-items-center w-7 h-7 rounded-lg text-ink/40 hover:text-primary hover:bg-primary/10" aria-label="تعديل"><Icon name="edit" class="w-4 h-4" /></button>
               </div>
             </transition-group>
           </div>
