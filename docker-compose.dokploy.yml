@@ -19,20 +19,12 @@ services:
       dockerfile: Dockerfile.prod
     depends_on: [gateway]
     restart: unless-stopped
+    # Routing is managed by Dokploy's "Domains" tab (service: web, port: 80,
+    # HTTPS via Let's Encrypt). We deliberately keep NO manual Traefik labels
+    # here — having both a Domains-tab router and manual labels for the same
+    # host makes Traefik return 404. `dokploy-network` must stay so Traefik can
+    # reach this container.
     networks: [souq-net, dokploy-network]
-    labels:
-      - "traefik.enable=true"
-      - "traefik.docker.network=dokploy-network"
-      # HTTPS
-      - "traefik.http.routers.souq-web.rule=Host(`${DOMAIN}`)"
-      - "traefik.http.routers.souq-web.entrypoints=websecure"
-      - "traefik.http.routers.souq-web.tls.certresolver=letsencrypt"
-      - "traefik.http.services.souq-web.loadbalancer.server.port=80"
-      # HTTP → HTTPS redirect
-      - "traefik.http.routers.souq-web-insecure.rule=Host(`${DOMAIN}`)"
-      - "traefik.http.routers.souq-web-insecure.entrypoints=web"
-      - "traefik.http.routers.souq-web-insecure.middlewares=souq-redirect"
-      - "traefik.http.middlewares.souq-redirect.redirectscheme.scheme=https"
 
   # ---------------- internal API gateway ----------------
   gateway:
